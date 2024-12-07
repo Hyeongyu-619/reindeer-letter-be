@@ -15,7 +15,11 @@ export class LettersService {
     return this.prisma.letter.create({
       data: {
         ...letterData,
-        receiverId: receiverId,
+        receiver: {
+          connect: {
+            id: receiverId,
+          },
+        },
       },
       include: {
         receiver: true,
@@ -38,20 +42,18 @@ export class LettersService {
     }
 
     // 수신자만 편지를 볼 수 있음
-    if (letter.receiverId !== userId) {
+    if (letter.receiver.id !== userId) {
       throw new ForbiddenException('이 편지는 수신자만 볼 수 있습니다.');
     }
 
     return letter;
   }
 
-  // 내가 받은 편지 목�� 조회
+  // 내가 받은 편지 목록 조회
   async getMyLetters(userId: number) {
     return this.prisma.letter.findMany({
       where: {
-        receiver: {
-          id: userId,
-        },
+        receiverId: userId,
       },
       orderBy: {
         createdAt: 'desc',
