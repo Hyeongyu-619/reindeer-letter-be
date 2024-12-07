@@ -12,3 +12,30 @@ datasource db {
   provider = "postgresql"
   url      = env("DATABASE_URL")
 }
+
+model User {
+  id              Int      @id @default(autoincrement())
+  email           String   @unique
+  password        String
+  nickName        String?
+  profileImageUrl String?
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+}
+
+model Letter {
+  id Int @id @default(autoincrement())
+  title String
+  description String
+  imageUrl String
+  bgmUrl String
+  category  Category
+  isOpen Boolean @default(false)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+enum Category {
+  TEXT
+  VOICE
+}
