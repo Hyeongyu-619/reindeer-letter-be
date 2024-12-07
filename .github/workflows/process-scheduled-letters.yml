@@ -1,0 +1,17 @@
+name: Process Scheduled Letters
+
+on:
+  schedule:
+    - cron: '0 15 * * *' # UTC 기준 15:00 (한국 시간 자정 00:00)
+
+jobs:
+  process-letters:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Process scheduled letters
+        run: |
+          response=$(curl -X POST ${{ secrets.API_URL }}/letters/process-scheduled \
+          -H "Content-Type: application/json")
+          echo "처리 결과: $response"
+        env:
+          API_URL: ${{ secrets.API_URL }}

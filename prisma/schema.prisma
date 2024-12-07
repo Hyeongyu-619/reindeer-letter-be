@@ -33,6 +33,7 @@ model Letter {
   bgmUrl        String
   category      Category
   isOpen        Boolean   @default(false)
+  isDelivered   Boolean   @default(false)
   scheduledAt   DateTime?
   createdAt     DateTime  @default(now())
   updatedAt     DateTime  @updatedAt

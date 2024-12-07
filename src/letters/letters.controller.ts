@@ -128,9 +128,9 @@ export class LettersController {
       },
     },
   })
-  @Post('upload')
+  @Post('upload/image')
   @UseInterceptors(FileInterceptor('file'))
-  async uploadFile(
+  async uploadImage(
     @UploadedFile(
       new ParseFilePipe({
         validators: [
@@ -142,5 +142,48 @@ export class LettersController {
     file: Express.Multer.File,
   ) {
     return this.lettersService.uploadImage(file);
+  }
+
+  @ApiOperation({
+    summary: '음성 파일 업로드 API',
+    description: '음성 파일을 S3에 업로드합니다.',
+  })
+  @ApiConsumes('multipart/form-data')
+  @ApiBody({
+    schema: {
+      type: 'object',
+      properties: {
+        file: {
+          type: 'string',
+          format: 'binary',
+          description: '업로드할 음성 파일 (mp3, wav, m4a만 허용, 최대 10MB)',
+        },
+      },
+    },
+  })
+  @ApiResponse({
+    status: 201,
+    description: '음성 파일 업로드 성공',
+    schema: {
+      example: {
+        voiceUrl:
+          'https://your-bucket.s3.region.amazonaws.com/voices/1234567890-voice.mp3',
+      },
+    },
+  })
+  @Post('upload/voice')
+  @UseInterceptors(FileInterceptor('file'))
+  async uploadVoice(
+    @UploadedFile(
+      new ParseFilePipe({
+        validators: [
+          new MaxFileSizeValidator({ maxSize: 10 * 1024 * 1024 }),
+          new FileTypeValidator({ fileType: /(mp3|wav|m4a)$/ }),
+        ],
+      }),
+    )
+    file: Express.Multer.File,
+  ) {
+    return this.lettersService.uploadVoice(file);
   }
 }

@@ -73,7 +73,48 @@ export class LettersService {
   }
 
   async uploadImage(file: Express.Multer.File) {
-    const imageUrl = await this.s3Service.uploadFile(file);
+    const imageUrl = await this.s3Service.uploadFile(file, 'image');
     return { imageUrl };
+  }
+
+  async uploadVoice(file: Express.Multer.File) {
+    const voiceUrl = await this.s3Service.uploadFile(file, 'audio');
+    return { voiceUrl };
+  }
+
+  async processScheduledLetters() {
+    const now = new Date();
+
+    // 발송 예정 시간이 현재 시간보다 이전이고, 아직 처리되지 않은 편지들을 조회
+    const scheduledLetters = await this.prisma.letter.findMany({
+      where: {
+        scheduledAt: {
+          lte: now,
+          not: null,
+        },
+        isDelivered: false,
+      },
+      include: {
+        receiver: true,
+      },
+    });
+
+    // 각 편지 처리
+    const results = await Promise.all(
+      scheduledLetters.map(async (letter) => {
+        // 편지 상태 업데이트
+        const updatedLetter = await this.prisma.letter.update({
+          where: { id: letter.id },
+          data: { isDelivered: true },
+        });
+
+        return updatedLetter;
+      }),
+    );
+
+    return {
+      processedCount: results.length,
+      letters: results,
+    };
   }
 }
