@@ -45,11 +45,13 @@ export class LettersService {
     return letter;
   }
 
-  // 내가 받은 편지 목록 조회
+  // 내가 받은 편지 목�� 조회
   async getMyLetters(userId: number) {
     return this.prisma.letter.findMany({
       where: {
-        receiverId: userId,
+        receiver: {
+          id: userId,
+        },
       },
       orderBy: {
         createdAt: 'desc',

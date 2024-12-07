@@ -36,9 +36,9 @@ model Letter {
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
   userId      Int?
-  receiverId  Int?
+  receiverId  Int
   user        User?    @relation("SentLetters", fields: [userId], references: [id])
-  receiver    User?    @relation("ReceivedLetters", fields: [receiverId], references: [id])
+  receiver    User    @relation("ReceivedLetters", fields: [receiverId], references: [id])
 }
 
 enum Category {
