@@ -5,10 +5,15 @@ import {
 } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { CreateLetterDto } from './dto/create-letter.dto';
+import { S3Service } from '../s3/s3.service';
+import { Express } from 'express';
 
 @Injectable()
 export class LettersService {
-  constructor(private prisma: PrismaService) {}
+  constructor(
+    private prisma: PrismaService,
+    private s3Service: S3Service,
+  ) {}
 
   async create(createLetterDto: CreateLetterDto) {
     const { receiverId, scheduledAt, ...letterData } = createLetterDto;
@@ -65,5 +70,10 @@ export class LettersService {
         receiver: true,
       },
     });
+  }
+
+  async uploadImage(file: Express.Multer.File) {
+    const imageUrl = await this.s3Service.uploadFile(file);
+    return { imageUrl };
   }
 }
