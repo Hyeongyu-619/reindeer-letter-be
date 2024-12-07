@@ -1,5 +1,11 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { IsString, IsEnum, IsBoolean, IsNotEmpty } from 'class-validator';
+import {
+  IsString,
+  IsEnum,
+  IsBoolean,
+  IsNotEmpty,
+  IsNumber,
+} from 'class-validator';
 import { Category } from '@prisma/client';
 
 export class CreateLetterDto {
@@ -45,10 +51,11 @@ export class CreateLetterDto {
 
   @ApiProperty({
     example: 1,
-    description: '사용자 ID',
+    description: '수신자 ID',
   })
   @IsNotEmpty()
-  userId: number;
+  @IsNumber()
+  receiverId: number;
 
   @ApiProperty({
     example: false,

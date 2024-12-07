@@ -21,7 +21,8 @@ model User {
   profileImageUrl String?
   createdAt       DateTime @default(now())
   updatedAt       DateTime @updatedAt
-  letters         Letter[]
+  sentLetters     Letter[] @relation("SentLetters")
+  receivedLetters Letter[] @relation("ReceivedLetters")
 }
 
 model Letter {
@@ -34,8 +35,10 @@ model Letter {
   isOpen      Boolean  @default(false)
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
-  userId      Int
-  user        User     @relation(fields: [userId], references: [id])
+  userId      Int?
+  receiverId  Int?
+  user        User?    @relation("SentLetters", fields: [userId], references: [id])
+  receiver    User?    @relation("ReceivedLetters", fields: [receiverId], references: [id])
 }
 
 enum Category {

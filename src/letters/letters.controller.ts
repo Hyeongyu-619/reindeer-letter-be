@@ -36,21 +36,13 @@ export class LettersController {
   }
 
   @ApiOperation({
-    summary: '공개된 편지 목록 조회 API',
-    description: '공개된 모든 편지를 조회합니다.',
-  })
-  @Get()
-  findAll() {
-    return this.lettersService.findAll();
-  }
-
-  @ApiOperation({
     summary: '특정 편지 조회 API',
     description: '특정 ID의 편지를 조회합니다.',
   })
+  @UseGuards(JwtAuthGuard)
   @Get(':id')
-  findOne(@Param('id') id: string) {
-    return this.lettersService.findOne(+id);
+  findOne(@Param('id') id: string, @Request() req) {
+    return this.lettersService.findOne(+id, req.user.userId);
   }
 
   @ApiOperation({
@@ -79,8 +71,8 @@ export class LettersController {
     },
   })
   @UseGuards(JwtAuthGuard)
-  @Get('my')
-  async getMyLetters(@Request() req) {
+  @Get('my/letters')
+  getMyLetters(@Request() req) {
     return this.lettersService.getMyLetters(req.user.userId);
   }
 }
