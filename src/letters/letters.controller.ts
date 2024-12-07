@@ -20,6 +20,8 @@ import {
   ApiResponse,
   ApiTags,
   ApiBearerAuth,
+  ApiConsumes,
+  ApiBody,
 } from '@nestjs/swagger';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { Express } from 'express';
@@ -99,6 +101,33 @@ export class LettersController {
     return this.lettersService.getMyLetters(req.user.userId);
   }
 
+  @ApiOperation({
+    summary: '이미지 업로드 API',
+    description: '이미지를 S3에 업로드합니다.',
+  })
+  @ApiConsumes('multipart/form-data')
+  @ApiBody({
+    schema: {
+      type: 'object',
+      properties: {
+        file: {
+          type: 'string',
+          format: 'binary',
+          description: '업로드할 이미지 파일 (jpg, jpeg, png만 허용, 최대 5MB)',
+        },
+      },
+    },
+  })
+  @ApiResponse({
+    status: 201,
+    description: '이미지 업로드 성공',
+    schema: {
+      example: {
+        imageUrl:
+          'https://your-bucket.s3.region.amazonaws.com/uploads/1234567890-image.jpg',
+      },
+    },
+  })
   @Post('upload')
   @UseInterceptors(FileInterceptor('file'))
   async uploadFile(
