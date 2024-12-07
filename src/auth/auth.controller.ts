@@ -28,39 +28,6 @@ export class AuthController {
       },
     },
   })
-  @ApiResponse({
-    status: 400,
-    description: '잘못된 요청',
-    schema: {
-      example: {
-        message: [
-          'email should not be empty',
-          'email must be an email',
-          'password must be shorter than or equal to 20 characters',
-          'password must be longer than or equal to 8 characters',
-          'password should not be empty',
-          'password must be a string',
-          'nickname must be shorter than or equal to 20 characters',
-          'nickname must be longer than or equal to 2 characters',
-          'nickname should not be empty',
-          'nickname must be a string',
-        ],
-        error: 'Bad Request',
-        statusCode: 400,
-      },
-    },
-  })
-  @ApiResponse({
-    status: 409,
-    description: '회원가입 실패 Conflict',
-    schema: {
-      example: {
-        message: 'Email or nickname already exists',
-        error: 'Conflict',
-        statusCode: 409,
-      },
-    },
-  })
   @ApiBody({ type: RegisterDto })
   @Post('register')
   async register(@Body() registerDto: RegisterDto) {
@@ -80,10 +47,6 @@ export class AuthController {
         access_token: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...',
       },
     },
-  })
-  @ApiResponse({
-    status: 401,
-    description: '인증 실패',
   })
   @ApiBody({ type: LoginDto })
   @UseGuards(LocalAuthGuard)

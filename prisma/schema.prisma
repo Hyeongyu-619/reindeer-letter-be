@@ -21,18 +21,21 @@ model User {
   profileImageUrl String?
   createdAt       DateTime @default(now())
   updatedAt       DateTime @updatedAt
+  letters         Letter[]
 }
 
 model Letter {
-  id Int @id @default(autoincrement())
-  title String
+  id          Int      @id @default(autoincrement())
+  title       String
   description String
-  imageUrl String
-  bgmUrl String
-  category  Category
-  isOpen Boolean @default(false)
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  imageUrl    String
+  bgmUrl      String
+  category    Category
+  isOpen      Boolean  @default(false)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  userId      Int
+  user        User     @relation(fields: [userId], references: [id])
 }
 
 enum Category {
