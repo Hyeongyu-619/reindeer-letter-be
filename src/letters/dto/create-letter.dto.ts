@@ -63,4 +63,11 @@ export class CreateLetterDto {
   })
   @IsBoolean()
   isOpen: boolean;
+
+  @ApiProperty({
+    example: '2025-01-01T12:00:00',
+    description: '예약 발송 시간',
+  })
+  @IsNumber()
+  scheduledAt?: Date;
 }

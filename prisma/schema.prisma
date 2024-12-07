@@ -26,15 +26,16 @@ model User {
 }
 
 model Letter {
-  id          Int      @id @default(autoincrement())
-  title       String
-  description String
-  imageUrl    String
-  bgmUrl      String
-  category    Category
-  isOpen      Boolean  @default(false)
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  id            Int       @id @default(autoincrement())
+  title         String
+  description   String
+  imageUrl      String
+  bgmUrl        String
+  category      Category
+  isOpen        Boolean   @default(false)
+  scheduledAt   DateTime?
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
   userId      Int?
   receiverId  Int
   user        User?    @relation("SentLetters", fields: [userId], references: [id])

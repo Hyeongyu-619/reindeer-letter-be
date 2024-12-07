@@ -11,10 +11,11 @@ export class LettersService {
   constructor(private prisma: PrismaService) {}
 
   async create(createLetterDto: CreateLetterDto) {
-    const { receiverId, ...letterData } = createLetterDto;
+    const { receiverId, scheduledAt, ...letterData } = createLetterDto;
     return this.prisma.letter.create({
       data: {
         ...letterData,
+        scheduledAt: scheduledAt ? new Date(scheduledAt) : null,
         receiver: {
           connect: {
             id: receiverId,
@@ -51,9 +52,11 @@ export class LettersService {
 
   // 내가 받은 편지 목록 조회
   async getMyLetters(userId: number) {
+    const now = new Date();
     return this.prisma.letter.findMany({
       where: {
         receiverId: userId,
+        OR: [{ scheduledAt: null }, { scheduledAt: { lte: now } }],
       },
       orderBy: {
         createdAt: 'desc',

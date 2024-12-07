@@ -24,11 +24,27 @@ export class LettersController {
 
   @ApiOperation({
     summary: '편지 작성 API',
-    description: '새로운 편지를 작성합니다.',
+    description:
+      '새로운 편지를 작성합니다. scheduledAt을 설정하면 예약 발송됩니다.',
   })
   @ApiResponse({
     status: 201,
     description: '편지 작성 성공',
+    schema: {
+      example: {
+        id: 1,
+        title: '사랑하는 친구에게',
+        description: '오랜만에 연락하네...',
+        imageUrl: 'https://example.com/image.jpg',
+        bgmUrl: 'https://example.com/music.mp3',
+        category: 'TEXT',
+        isOpen: false,
+        scheduledAt: '2024-03-20T12:00:00.000Z',
+        createdAt: '2024-03-14T12:00:00.000Z',
+        updatedAt: '2024-03-14T12:00:00.000Z',
+        userId: 1,
+      },
+    },
   })
   @Post()
   create(@Body() createLetterDto: CreateLetterDto) {
