@@ -1,8 +1,21 @@
-import { Body, Controller, Post, UseGuards, Request } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  Post,
+  UseGuards,
+  Request,
+  UnauthorizedException,
+} from '@nestjs/common';
 import { AuthService } from './auth.service';
 import { LocalAuthGuard } from './guards/local-auth.guard';
 import { ApiBody, ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { LoginDto, RegisterDto } from './dto';
+import { Request as ExpressRequest } from 'express';
+import { User } from '@prisma/client';
+
+interface RequestWithUser extends Request {
+  user: Omit<User, 'password'>;
+}
 
 @ApiTags('Auth')
 @Controller('auth')
@@ -51,7 +64,10 @@ export class AuthController {
   @ApiBody({ type: LoginDto })
   @UseGuards(LocalAuthGuard)
   @Post('login')
-  async login(@Request() req) {
+  async login(@Request() req: RequestWithUser) {
+    if (!req.user) {
+      throw new UnauthorizedException('사용자 인증에 실패했습니다.');
+    }
     return this.authService.login(req.user);
   }
 }

@@ -10,10 +10,7 @@ import { Express } from 'express';
 
 @Injectable()
 export class LettersService {
-  constructor(
-    private prisma: PrismaService,
-    private s3Service: S3Service,
-  ) {}
+  constructor(private prisma: PrismaService, private s3Service: S3Service) {}
 
   async create(createLetterDto: CreateLetterDto) {
     const { receiverId, scheduledAt, ...letterData } = createLetterDto;

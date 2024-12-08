@@ -25,6 +25,13 @@ import {
 } from '@nestjs/swagger';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { Express } from 'express';
+import { User } from '@prisma/client';
+
+interface RequestWithUser extends Request {
+  user: {
+    userId: number;
+  };
+}
 
 @ApiTags('Letters')
 @Controller('letters')
@@ -66,7 +73,7 @@ export class LettersController {
   })
   @UseGuards(JwtAuthGuard)
   @Get(':id')
-  findOne(@Param('id') id: string, @Request() req) {
+  findOne(@Param('id') id: string, @Request() req: RequestWithUser) {
     return this.lettersService.findOne(+id, req.user.userId);
   }
 
@@ -97,7 +104,7 @@ export class LettersController {
   })
   @UseGuards(JwtAuthGuard)
   @Get('my/letters')
-  getMyLetters(@Request() req) {
+  getMyLetters(@Request() req: RequestWithUser) {
     return this.lettersService.getMyLetters(req.user.userId);
   }
 

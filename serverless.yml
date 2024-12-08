@@ -1,0 +1,56 @@
+service: reindeer-letter-api
+
+plugins:
+  - serverless-plugin-typescript
+  - serverless-offline
+
+provider:
+  name: aws
+  runtime: nodejs18.x
+  region: ap-northeast-2
+  stage: ''
+  environment:
+    NODE_OPTIONS: '--enable-source-maps'
+  apiGateway:
+    shouldStartNameWithService: true
+    minimumCompressionSize: 1024
+
+package:
+  patterns:
+    - '!node_modules/.prisma/client/libquery_engine-*'
+    - 'node_modules/.prisma/client/libquery_engine-rhel-*'
+    - '!node_modules/@prisma/engines/**'
+    - '!node_modules/prisma/**'
+    - '!tests/**'
+    - '!coverage/**'
+    - '!.git/**'
+    - '!.vscode/**'
+    - 'dev.json'
+
+custom:
+  typescript:
+    srcPath: ./src
+    buildDir: .build
+  serverless-offline:
+    noPrependStageInUrl: true
+    httpPort: 3000
+    stageVariables:
+      stage: ${self:provider.stage}
+
+functions:
+  api:
+    handler: src/lambda.handler
+    events:
+      - http:
+          path: /{proxy+}
+          method: ANY
+          cors:
+            origin: '*'
+            headers:
+              - Content-Type
+              - Authorization
+              - X-Amz-Date
+              - X-Api-Key
+              - X-Amz-Security-Token
+              - X-Amz-User-Agent
+            allowCredentials: false
