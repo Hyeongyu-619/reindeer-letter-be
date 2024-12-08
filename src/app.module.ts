@@ -8,12 +8,19 @@ import { AuthController } from './auth/auth.controller';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { UsersModule } from './users/users.module';
+import { ThrottlerModule } from '@nestjs/throttler';
 
 @Module({
   imports: [
     ConfigModule.forRoot({
       isGlobal: true,
     }),
+    ThrottlerModule.forRoot([
+      {
+        ttl: 60, // 시간 윈도우 (초)
+        limit: 10, // 허용되는 최대 요청 수
+      },
+    ]),
     AuthModule,
     LettersModule,
     PrismaModule,

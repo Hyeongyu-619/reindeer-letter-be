@@ -5,6 +5,7 @@ import {
   UseGuards,
   Request,
   UnauthorizedException,
+  Get,
 } from '@nestjs/common';
 import { AuthService } from './auth.service';
 import { LocalAuthGuard } from './guards/local-auth.guard';
@@ -12,6 +13,7 @@ import { ApiBody, ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { LoginDto, RegisterDto } from './dto';
 import { Request as ExpressRequest } from 'express';
 import { User } from '@prisma/client';
+import { Throttle, SkipThrottle } from '@nestjs/throttler';
 
 interface RequestWithUser extends Request {
   user: Omit<User, 'password'>;
@@ -42,6 +44,7 @@ export class AuthController {
     },
   })
   @ApiBody({ type: RegisterDto })
+  @Throttle({ default: { limit: 5, ttl: 60 } })
   @Post('register')
   async register(@Body() registerDto: RegisterDto) {
     const { email, password, nickname } = registerDto;
@@ -63,6 +66,7 @@ export class AuthController {
   })
   @ApiBody({ type: LoginDto })
   @UseGuards(LocalAuthGuard)
+  @Throttle({ default: { limit: 3, ttl: 60 } })
   @Post('login')
   async login(@Request() req: RequestWithUser) {
     if (!req.user) {
