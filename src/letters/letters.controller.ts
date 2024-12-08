@@ -11,6 +11,7 @@ import {
   ParseFilePipe,
   MaxFileSizeValidator,
   FileTypeValidator,
+  Query,
 } from '@nestjs/common';
 import { LettersService } from './letters.service';
 import { CreateLetterDto } from './dto/create-letter.dto';
@@ -26,6 +27,7 @@ import {
 import { FileInterceptor } from '@nestjs/platform-express';
 import { Express } from 'express';
 import { User } from '@prisma/client';
+import { PaginationQueryDto } from './dto/pagination-query.dto';
 
 interface RequestWithUser extends Request {
   user: {
@@ -79,33 +81,44 @@ export class LettersController {
 
   @ApiOperation({
     summary: '내 편지 목록 조회 API',
-    description: '자신이 작성한 편지 목록을 조회합니다.',
+    description: '자신이 작성한 편지 목록을 페이지네이션하여 조회합니다.',
   })
   @ApiBearerAuth('access-token')
   @ApiResponse({
     status: 200,
     description: '편지 목록 조회 성공',
     schema: {
-      example: [
-        {
-          id: 1,
-          title: '사랑하는 친구에게',
-          description: '오랜만에 연락하네...',
-          imageUrl: 'https://example.com/image.jpg',
-          bgmUrl: 'https://example.com/music.mp3',
-          category: 'TEXT',
-          isOpen: false,
-          createdAt: '2024-03-14T12:00:00.000Z',
-          updatedAt: '2024-03-14T12:00:00.000Z',
-          userId: 1,
+      example: {
+        items: [
+          {
+            id: 1,
+            title: '사랑하는 친구에게',
+            description: '오랜만에 연락하네...',
+            imageUrl: 'https://example.com/image.jpg',
+            bgmUrl: 'https://example.com/music.mp3',
+            category: 'TEXT',
+            isOpen: false,
+            createdAt: '2024-03-14T12:00:00.000Z',
+            updatedAt: '2024-03-14T12:00:00.000Z',
+            userId: 1,
+          },
+        ],
+        meta: {
+          total: 100,
+          page: 1,
+          limit: 10,
+          totalPages: 10,
         },
-      ],
+      },
     },
   })
   @UseGuards(JwtAuthGuard)
   @Get('my/letters')
-  getMyLetters(@Request() req: RequestWithUser) {
-    return this.lettersService.getMyLetters(req.user.userId);
+  getMyLetters(
+    @Request() req: RequestWithUser,
+    @Query() paginationQuery: PaginationQueryDto,
+  ) {
+    return this.lettersService.getMyLetters(req.user.userId, paginationQuery);
   }
 
   @ApiOperation({

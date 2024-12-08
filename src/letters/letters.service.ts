@@ -53,20 +53,44 @@ export class LettersService {
   }
 
   // 내가 받은 편지 목록 조회
-  async getMyLetters(userId: number) {
+  async getMyLetters(userId: number, { page = 1, limit = 10 }) {
     const now = new Date();
-    return this.prisma.letter.findMany({
-      where: {
-        receiverId: userId,
-        OR: [{ scheduledAt: null }, { scheduledAt: { lte: now } }],
+    const skip = (page - 1) * limit;
+
+    const [items, total] = await Promise.all([
+      this.prisma.letter.findMany({
+        where: {
+          receiverId: userId,
+          OR: [{ scheduledAt: null }, { scheduledAt: { lte: now } }],
+        },
+        orderBy: {
+          createdAt: 'desc',
+        },
+        include: {
+          receiver: true,
+        },
+        skip,
+        take: limit,
+      }),
+      this.prisma.letter.count({
+        where: {
+          receiverId: userId,
+          OR: [{ scheduledAt: null }, { scheduledAt: { lte: now } }],
+        },
+      }),
+    ]);
+
+    const totalPages = Math.ceil(total / limit);
+
+    return {
+      items,
+      meta: {
+        total,
+        page,
+        limit,
+        totalPages,
       },
-      orderBy: {
-        createdAt: 'desc',
-      },
-      include: {
-        receiver: true,
-      },
-    });
+    };
   }
 
   async uploadImage(file: Express.Multer.File) {
