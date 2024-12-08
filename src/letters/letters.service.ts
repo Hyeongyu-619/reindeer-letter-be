@@ -13,10 +13,12 @@ export class LettersService {
   constructor(private prisma: PrismaService, private s3Service: S3Service) {}
 
   async create(createLetterDto: CreateLetterDto) {
-    const { receiverId, scheduledAt, ...letterData } = createLetterDto;
+    const { receiverId, scheduledAt, senderNickName, ...letterData } =
+      createLetterDto;
     return this.prisma.letter.create({
       data: {
         ...letterData,
+        senderNickName,
         scheduledAt: scheduledAt ? new Date(scheduledAt) : null,
         receiver: {
           connect: {

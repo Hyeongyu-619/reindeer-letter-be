@@ -5,6 +5,7 @@ import {
   IsBoolean,
   IsNotEmpty,
   IsNumber,
+  MaxLength,
 } from 'class-validator';
 import { Category } from '@prisma/client';
 
@@ -70,4 +71,13 @@ export class CreateLetterDto {
   })
   @IsNumber()
   scheduledAt?: Date;
+
+  @ApiProperty({
+    example: '익명의 친구',
+    description: '발신자 닉네임',
+  })
+  @IsString()
+  @IsNotEmpty()
+  @MaxLength(20)
+  senderNickName: string;
 }

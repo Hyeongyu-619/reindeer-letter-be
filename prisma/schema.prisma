@@ -32,16 +32,17 @@ model Letter {
   description   String
   imageUrl      String
   bgmUrl        String
+  senderNickName String
   category      Category
   isOpen        Boolean   @default(false)
   isDelivered   Boolean   @default(false)
   scheduledAt   DateTime?
   createdAt     DateTime  @default(now())
   updatedAt     DateTime  @updatedAt
-  userId      Int?
-  receiverId  Int
-  user        User?    @relation("SentLetters", fields: [userId], references: [id])
-  receiver    User    @relation("ReceivedLetters", fields: [receiverId], references: [id])
+  userId        Int?
+  receiverId    Int
+  user          User?     @relation("SentLetters", fields: [userId], references: [id])
+  receiver      User      @relation("ReceivedLetters", fields: [receiverId], references: [id])
 }
 
 enum Category {
