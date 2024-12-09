@@ -11,6 +11,7 @@ provider:
   stage: ''
   environment:
     NODE_OPTIONS: '--enable-source-maps'
+    TRANSFORM_ENABLED: 'true'
   apiGateway:
     shouldStartNameWithService: true
     minimumCompressionSize: 1024
@@ -54,3 +55,8 @@ functions:
               - X-Amz-Security-Token
               - X-Amz-User-Agent
             allowCredentials: false
+
+  processScheduledLetters:
+    handler: src/lambda-cron.handler
+    events:
+      - schedule: cron(0 15 * * ? *)

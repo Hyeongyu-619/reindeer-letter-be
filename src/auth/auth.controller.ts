@@ -6,10 +6,17 @@ import {
   Request,
   UnauthorizedException,
   Get,
+  Query,
 } from '@nestjs/common';
 import { AuthService } from './auth.service';
 import { LocalAuthGuard } from './guards/local-auth.guard';
-import { ApiBody, ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
+import {
+  ApiBody,
+  ApiOperation,
+  ApiResponse,
+  ApiTags,
+  ApiQuery,
+} from '@nestjs/swagger';
 import { LoginDto, RegisterDto } from './dto';
 import { Request as ExpressRequest } from 'express';
 import { User } from '@prisma/client';
@@ -73,5 +80,73 @@ export class AuthController {
       throw new UnauthorizedException('사용자 인증에 실패했습니다.');
     }
     return this.authService.login(req.user);
+  }
+
+  @ApiOperation({
+    summary: '이메일 중복 확인 API',
+    description: '회원가입 시 이메일 중복 여부를 확인합니다.',
+  })
+  @ApiQuery({
+    name: 'email',
+    required: true,
+    description: '확인할 이메일 주소',
+  })
+  @ApiResponse({
+    status: 200,
+    description: '사용 가능한 이메일',
+    schema: {
+      example: {
+        available: true,
+      },
+    },
+  })
+  @ApiResponse({
+    status: 409,
+    description: '이미 사용 중인 이메일',
+    schema: {
+      example: {
+        statusCode: 409,
+        message: '이미 사용 중인 이메일입니다.',
+        error: 'Conflict',
+      },
+    },
+  })
+  @Get('check-email')
+  checkEmail(@Query('email') email: string) {
+    return this.authService.checkEmailDuplicate(email);
+  }
+
+  @ApiOperation({
+    summary: '닉네임 중복 확인 API',
+    description: '회원가입 시 닉네임 중복 여부를 확인합니다.',
+  })
+  @ApiQuery({
+    name: 'nickname',
+    required: true,
+    description: '확인할 닉네임',
+  })
+  @ApiResponse({
+    status: 200,
+    description: '사용 가능한 닉네임',
+    schema: {
+      example: {
+        available: true,
+      },
+    },
+  })
+  @ApiResponse({
+    status: 409,
+    description: '이미 사용 중인 닉네임',
+    schema: {
+      example: {
+        statusCode: 409,
+        message: '이미 사용 중인 닉네임입니다.',
+        error: 'Conflict',
+      },
+    },
+  })
+  @Get('check-nickname')
+  checkNickname(@Query('nickname') nickname: string) {
+    return this.authService.checkNicknameDuplicate(nickname);
   }
 }

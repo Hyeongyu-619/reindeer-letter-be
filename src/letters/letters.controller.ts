@@ -12,6 +12,7 @@ import {
   MaxFileSizeValidator,
   FileTypeValidator,
   Query,
+  BadRequestException,
 } from '@nestjs/common';
 import { LettersService } from './letters.service';
 import { CreateLetterDto } from './dto/create-letter.dto';
@@ -46,7 +47,7 @@ export class LettersController {
       '새로운 편지를 작성합니다. scheduledAt을 설정하면 예약 발송됩니다.',
   })
   @ApiResponse({
-    status: 201,
+    status: 200,
     description: '편지 작성 성공',
     schema: {
       example: {
@@ -70,55 +71,54 @@ export class LettersController {
   }
 
   @ApiOperation({
+    summary: '내 편지 목록 조회 API',
+    description: '자신이 받은 편지 목록을 페이지네이션하여 조회합니다.',
+  })
+  @ApiBearerAuth('access-token')
+  @UseGuards(JwtAuthGuard)
+  @Get('my')
+  getMyLetters(
+    @Request() req: RequestWithUser,
+    @Query() query: Record<string, any>,
+  ) {
+    // 쿼리 파라미터 수동 변환
+    const page = query.page ? parseInt(query.page, 10) : 1;
+    const limit = query.limit ? parseInt(query.limit, 10) : 10;
+
+    // 유효성 검사
+    if (isNaN(page) || page < 1) {
+      throw new BadRequestException('페이지 번호는 1 이상의 숫자여야 합니다.');
+    }
+    if (isNaN(limit) || limit < 1) {
+      throw new BadRequestException(
+        '페이지당 항목 수는 1 이상의 숫자여야 합니다.',
+      );
+    }
+
+    return this.lettersService.getMyLetters(req.user.userId, { page, limit });
+  }
+
+  @ApiOperation({
     summary: '특정 편지 조회 API',
     description: '특정 ID의 편지를 조회합니다.',
   })
+  @ApiResponse({
+    status: 200,
+    description: '편지 조회 성공',
+  })
+  @ApiResponse({
+    status: 401,
+    description: '인증되지 않은 사용자',
+  })
+  @ApiResponse({
+    status: 403,
+    description: '권한 없음 (수신자가 아니거나 아직 열람할 수 없는 편지)',
+  })
+  @ApiBearerAuth('access-token')
   @UseGuards(JwtAuthGuard)
   @Get(':id')
   findOne(@Param('id') id: string, @Request() req: RequestWithUser) {
     return this.lettersService.findOne(+id, req.user.userId);
-  }
-
-  @ApiOperation({
-    summary: '내 편지 목록 조회 API',
-    description: '자신이 작성한 편지 목록을 페이지네이션하여 조회합니다.',
-  })
-  @ApiBearerAuth('access-token')
-  @ApiResponse({
-    status: 200,
-    description: '편지 목록 조회 성공',
-    schema: {
-      example: {
-        items: [
-          {
-            id: 1,
-            title: '사랑하는 친구에게',
-            description: '오랜만에 연락하네...',
-            imageUrl: 'https://example.com/image.jpg',
-            bgmUrl: 'https://example.com/music.mp3',
-            category: 'TEXT',
-            isOpen: false,
-            createdAt: '2024-03-14T12:00:00.000Z',
-            updatedAt: '2024-03-14T12:00:00.000Z',
-            userId: 1,
-          },
-        ],
-        meta: {
-          total: 100,
-          page: 1,
-          limit: 10,
-          totalPages: 10,
-        },
-      },
-    },
-  })
-  @UseGuards(JwtAuthGuard)
-  @Get('my/letters')
-  getMyLetters(
-    @Request() req: RequestWithUser,
-    @Query() paginationQuery: PaginationQueryDto,
-  ) {
-    return this.lettersService.getMyLetters(req.user.userId, paginationQuery);
   }
 
   @ApiOperation({
@@ -139,7 +139,7 @@ export class LettersController {
     },
   })
   @ApiResponse({
-    status: 201,
+    status: 200,
     description: '이미지 업로드 성공',
     schema: {
       example: {
@@ -182,7 +182,7 @@ export class LettersController {
     },
   })
   @ApiResponse({
-    status: 201,
+    status: 200,
     description: '음성 파일 업로드 성공',
     schema: {
       example: {

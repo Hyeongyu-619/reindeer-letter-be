@@ -6,6 +6,7 @@ import {
   IsNotEmpty,
   IsNumber,
   MaxLength,
+  IsOptional,
 } from 'class-validator';
 import { Category } from '@prisma/client';
 
@@ -66,11 +67,13 @@ export class CreateLetterDto {
   isOpen: boolean;
 
   @ApiProperty({
-    example: '2025-01-01T12:00:00',
-    description: '예약 발송 시간',
+    example: '2024-12-25',
+    description: '예약 발송 시간 (YYYY-MM-DD 형식)',
+    required: false,
   })
-  @IsNumber()
-  scheduledAt?: Date;
+  @IsString()
+  @IsOptional()
+  scheduledAt?: string;
 
   @ApiProperty({
     example: '익명의 친구',
