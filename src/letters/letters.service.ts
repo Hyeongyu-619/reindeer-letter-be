@@ -8,10 +8,15 @@ import { CreateLetterDto } from './dto/create-letter.dto';
 import { S3Service } from '../s3/s3.service';
 import { Express } from 'express';
 import { PaginationQueryDto } from './dto/pagination-query.dto';
+import { EmailService } from '../email/email.service';
 
 @Injectable()
 export class LettersService {
-  constructor(private prisma: PrismaService, private s3Service: S3Service) {}
+  constructor(
+    private prisma: PrismaService,
+    private s3Service: S3Service,
+    private emailService: EmailService,
+  ) {}
 
   async create(createLetterDto: CreateLetterDto) {
     const { receiverId, scheduledAt, senderNickName, ...letterData } =
@@ -95,12 +100,24 @@ export class LettersService {
       this.prisma.letter.findMany({
         where: {
           receiverId: userId,
+          isDelivered: true,
+        },
+        select: {
+          id: true,
+          title: true,
+          description: true,
+          imageUrl: true,
+          bgmUrl: true,
+          category: true,
+          isOpen: true,
+          isDelivered: true,
+          scheduledAt: true,
+          createdAt: true,
+          updatedAt: true,
+          senderNickName: true,
         },
         orderBy: {
           createdAt: 'desc',
-        },
-        include: {
-          receiver: true,
         },
         skip,
         take: limit,
@@ -136,7 +153,6 @@ export class LettersService {
   async processScheduledLetters() {
     const now = new Date();
 
-    // 발송 예정 시간이 현재 시간보다 이전이고, 아직 처리되지 않은 편지들을 조회
     const scheduledLetters = await this.prisma.letter.findMany({
       where: {
         scheduledAt: {
@@ -150,16 +166,24 @@ export class LettersService {
       },
     });
 
-    // 각 편지 처리
     const results = await Promise.all(
       scheduledLetters.map(async (letter) => {
-        // 편지 상태 업데이트 (isDelivered를 true로 설정)
         const updatedLetter = await this.prisma.letter.update({
           where: { id: letter.id },
           data: {
             isDelivered: true,
           },
         });
+
+        // 이메일 발송
+        try {
+          await this.emailService.sendLetterNotification(
+            letter.receiver.email,
+            letter.title,
+          );
+        } catch (error) {
+          console.error(`편지 ID ${letter.id} 이메일 발송 실패:`, error);
+        }
 
         return updatedLetter;
       }),

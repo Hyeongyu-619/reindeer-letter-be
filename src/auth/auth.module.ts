@@ -12,7 +12,7 @@ import * as devConfig from '../../dev.json';
     UsersModule,
     JwtModule.register({
       secret: devConfig.JWT_SECRET,
-      signOptions: { expiresIn: '60m' },
+      signOptions: { expiresIn: '30d' },
     }),
   ],
   controllers: [AuthController],
