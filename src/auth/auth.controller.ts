@@ -7,6 +7,7 @@ import {
   UnauthorizedException,
   Get,
   Query,
+  Res,
 } from '@nestjs/common';
 import { AuthService } from './auth.service';
 import { LocalAuthGuard } from './guards/local-auth.guard';
@@ -16,11 +17,15 @@ import {
   ApiResponse,
   ApiTags,
   ApiQuery,
+  ApiBearerAuth,
 } from '@nestjs/swagger';
 import { LoginDto, RegisterDto } from './dto';
 import { Request as ExpressRequest } from 'express';
 import { User } from '@prisma/client';
 import { Throttle, SkipThrottle } from '@nestjs/throttler';
+import { JwtAuthGuard } from './guards/jwt-auth.guard';
+import { Response } from 'express';
+import { Cookies } from './decorators/cookies.decorator';
 
 interface RequestWithUser extends Request {
   user: Omit<User, 'password'>;
@@ -75,11 +80,14 @@ export class AuthController {
   @UseGuards(LocalAuthGuard)
   @Throttle({ default: { limit: 3, ttl: 60 } })
   @Post('login')
-  async login(@Request() req: RequestWithUser) {
+  async login(
+    @Request() req: RequestWithUser,
+    @Res({ passthrough: true }) res: Response,
+  ) {
     if (!req.user) {
       throw new UnauthorizedException('사용자 인증에 실패했습니다.');
     }
-    return this.authService.login(req.user);
+    return this.authService.login(req.user, res);
   }
 
   @ApiOperation({
@@ -148,5 +156,36 @@ export class AuthController {
   @Get('check-nickname')
   checkNickname(@Query('nickname') nickname: string) {
     return this.authService.checkNicknameDuplicate(nickname);
+  }
+
+  @ApiOperation({
+    summary: '로그아웃 API',
+    description: '사용자 로그아웃을 처리합니다.',
+  })
+  @ApiResponse({
+    status: 200,
+    description: '로그아웃 성공',
+    schema: {
+      example: {
+        message: '로그아웃 되었습니다.',
+      },
+    },
+  })
+  @ApiBearerAuth('access-token')
+  @UseGuards(JwtAuthGuard)
+  @Post('logout')
+  async logout(
+    @Request() req: RequestWithUser,
+    @Res({ passthrough: true }) res: Response,
+  ) {
+    // refresh_token 쿠키 제거
+    res.clearCookie('refresh_token', {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: 'strict',
+    });
+
+    // DB에서 refresh token 제거
+    return this.authService.logout(req.user.id);
   }
 }

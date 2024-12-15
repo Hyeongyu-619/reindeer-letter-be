@@ -9,6 +9,7 @@ import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { UsersModule } from './users/users.module';
 import { ThrottlerModule } from '@nestjs/throttler';
+import { EmailModule } from './email/email.module';
 
 @Module({
   imports: [
@@ -17,8 +18,8 @@ import { ThrottlerModule } from '@nestjs/throttler';
     }),
     ThrottlerModule.forRoot([
       {
-        ttl: 60, // 시간 윈도우 (초)
-        limit: 10, // 허용되는 최대 요청 수
+        ttl: 60,
+        limit: 10,
       },
     ]),
     AuthModule,
@@ -26,6 +27,7 @@ import { ThrottlerModule } from '@nestjs/throttler';
     PrismaModule,
     S3Module,
     UsersModule,
+    EmailModule,
   ],
   controllers: [AppController, AuthController],
   providers: [AppService],
