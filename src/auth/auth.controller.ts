@@ -188,4 +188,22 @@ export class AuthController {
     // DB에서 refresh token 제거
     return this.authService.logout(req.user.id);
   }
+
+  @ApiOperation({
+    summary: '이메일 인증 코드 발송 API',
+    description: '회원가입을 위한 이메일 인증 코드를 발송합니다.',
+  })
+  @Post('send-verification')
+  async sendVerification(@Body('email') email: string) {
+    return this.authService.sendVerificationCode(email);
+  }
+
+  @ApiOperation({
+    summary: '이메일 인증 코드 확인 API',
+    description: '발송된 이메일 인증 코드를 확인합니다.',
+  })
+  @Post('verify-email')
+  async verifyEmail(@Body('email') email: string, @Body('code') code: string) {
+    return this.authService.verifyEmail(email, code);
+  }
 }

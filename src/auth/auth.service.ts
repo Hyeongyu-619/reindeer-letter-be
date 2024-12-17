@@ -2,6 +2,8 @@ import {
   Injectable,
   ConflictException,
   UnauthorizedException,
+  NotFoundException,
+  BadRequestException,
 } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import { UsersService } from '../users/users.service';
@@ -9,10 +11,15 @@ import * as bcrypt from 'bcryptjs';
 import { User } from '@prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
 import { Response } from 'express';
+import { EmailService } from '../email/email.service';
 
 @Injectable()
 export class AuthService {
-  constructor(private prisma: PrismaService, private jwtService: JwtService) {}
+  constructor(
+    private prisma: PrismaService,
+    private jwtService: JwtService,
+    private emailService: EmailService,
+  ) {}
 
   async validateUser(
     email: string,
@@ -110,6 +117,15 @@ export class AuthService {
   }
 
   async register(email: string, password: string, nickName: string) {
+    // 이메일 인증 확인
+    const verification = await this.prisma.emailVerification.findUnique({
+      where: { email },
+    });
+
+    if (!verification || !verification.verified) {
+      throw new BadRequestException('이메일 인증이 필요합니다.');
+    }
+
     // 이메일 중복 체크
     const existingEmail = await this.prisma.user.findUnique({
       where: { email },
@@ -167,5 +183,50 @@ export class AuthService {
     }
 
     return { available: true };
+  }
+
+  async sendVerificationCode(email: string) {
+    // 6자리 랜덤 코드 생성
+    const code = Math.random().toString(36).substring(2, 8).toUpperCase();
+
+    // 10분 후 만료
+    const expiresAt = new Date(Date.now() + 10 * 60 * 1000);
+
+    // 기존 인증 정보가 있다면 업데이트, 없다면 생성
+    await this.prisma.emailVerification.upsert({
+      where: { email },
+      update: { code, expiresAt, verified: false },
+      create: { email, code, expiresAt },
+    });
+
+    // 인증 메일 발송
+    await this.emailService.sendVerificationEmail(email, code);
+
+    return { message: '인증 코드가 이메일로 발송되었습니다.' };
+  }
+
+  async verifyEmail(email: string, code: string) {
+    const verification = await this.prisma.emailVerification.findUnique({
+      where: { email },
+    });
+
+    if (!verification) {
+      throw new NotFoundException('인증 정보를 찾을 수 없습니다.');
+    }
+
+    if (verification.expiresAt < new Date()) {
+      throw new BadRequestException('인증 코드가 만료되었습니다.');
+    }
+
+    if (verification.code !== code) {
+      throw new BadRequestException('잘못된 인증 코드입니다.');
+    }
+
+    await this.prisma.emailVerification.update({
+      where: { email },
+      data: { verified: true },
+    });
+
+    return { verified: true };
   }
 }

@@ -58,4 +58,27 @@ export class EmailService {
       throw error;
     }
   }
+
+  async sendVerificationEmail(to: string, code: string) {
+    await this.transporter.sendMail({
+      from: devConfig.NAVER_EMAIL,
+      to,
+      subject: '🎄 Reindeer Letter 이메일 인증',
+      html: `
+        <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+          <h1 style="color: #4A90E2;">이메일 인증</h1>
+          <p style="font-size: 16px; color: #333;">
+            안녕하세요! Reindeer Letter 회원가입을 위한 인증 코드입니다.<br>
+            아래 코드를 입력해주세요.
+          </p>
+          <div style="margin: 20px 0; padding: 15px; background-color: #f5f5f5; border-radius: 5px; text-align: center;">
+            <h2 style="margin: 0; color: #333; letter-spacing: 5px;">${code}</h2>
+          </div>
+          <p style="font-size: 14px; color: #666;">
+            * 이 코드는 10분 동안 유효합니다.
+          </p>
+        </div>
+      `,
+    });
+  }
 }
