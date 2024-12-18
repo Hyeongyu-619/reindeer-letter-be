@@ -27,8 +27,6 @@ import {
 } from '@nestjs/swagger';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { Express } from 'express';
-import { User } from '@prisma/client';
-import { PaginationQueryDto } from './dto/pagination-query.dto';
 
 interface RequestWithUser extends Request {
   user: {
@@ -44,7 +42,7 @@ export class LettersController {
   @ApiOperation({
     summary: '편지 작성 API',
     description:
-      '새로운 편지를 작성합니다. scheduledAt을 설정하면 예약 발송됩니다.',
+      '새로운 편지를 작성합니다. 로그인한 경우 발신자가 저장되고, 비로그인시 익명으로 전송됩니다.',
   })
   @ApiResponse({
     status: 200,
@@ -66,8 +64,14 @@ export class LettersController {
     },
   })
   @Post()
-  create(@Body() createLetterDto: CreateLetterDto) {
-    return this.lettersService.create(createLetterDto);
+  @UseGuards(JwtAuthGuard)
+  @ApiBearerAuth('access-token')
+  create(
+    @Body() createLetterDto: CreateLetterDto,
+    @Request() req: RequestWithUser,
+  ) {
+    const userId = req.user?.userId;
+    return this.lettersService.create(createLetterDto, userId);
   }
 
   @ApiOperation({
@@ -205,5 +209,34 @@ export class LettersController {
     file: Express.Multer.File,
   ) {
     return this.lettersService.uploadVoice(file);
+  }
+
+  @ApiOperation({
+    summary: '내가 나에게 쓴 편지 목록 조회 API',
+    description: '자신이 자신에게 쓴 편�� 목록을 페이지네이션하여 조회합니다.',
+  })
+  @ApiBearerAuth('access-token')
+  @UseGuards(JwtAuthGuard)
+  @Get('my/self')
+  getMyLettersToMyself(
+    @Request() req: RequestWithUser,
+    @Query() query: Record<string, any>,
+  ) {
+    const page = query.page ? parseInt(query.page, 10) : 1;
+    const limit = query.limit ? parseInt(query.limit, 10) : 10;
+
+    if (isNaN(page) || page < 1) {
+      throw new BadRequestException('페이지 번호는 1 이상의 숫자여야 합니다.');
+    }
+    if (isNaN(limit) || limit < 1) {
+      throw new BadRequestException(
+        '페이지당 항목 수는 1 이상의 숫자여야 합니다.',
+      );
+    }
+
+    return this.lettersService.getMyLettersToMyself(req.user.userId, {
+      page,
+      limit,
+    });
   }
 }

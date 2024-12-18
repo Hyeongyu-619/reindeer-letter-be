@@ -21,13 +21,21 @@ export class AuthService {
     private emailService: EmailService,
   ) {}
 
-  async validateUser(
-    email: string,
-    password: string,
-  ): Promise<Omit<User, 'password'> | null> {
+  async validateUser(email: string, password: string): Promise<any> {
     const user = await this.prisma.user.findUnique({
       where: { email },
+      select: {
+        id: true,
+        email: true,
+        password: true,
+        nickName: true,
+        profileImageUrl: true,
+        createdAt: true,
+        updatedAt: true,
+        refreshToken: true,
+      },
     });
+
     if (user && (await bcrypt.compare(password, user.password))) {
       const { password: _, ...result } = user;
       return result;
@@ -41,18 +49,16 @@ export class AuthService {
     const accessToken = this.jwtService.sign(payload, { expiresIn: '1h' });
     const refreshToken = this.jwtService.sign(payload, { expiresIn: '7d' });
 
-    // Refresh Token을 DB에 저장
     await this.prisma.user.update({
       where: { id: user.id },
       data: { refreshToken },
     });
 
-    // Refresh Token을 HttpOnly 쿠키로 설정
     response.cookie('refresh_token', refreshToken, {
       httpOnly: true,
       secure: process.env.NODE_ENV === 'production',
       sameSite: 'strict',
-      maxAge: 7 * 24 * 60 * 60 * 1000, // 7일
+      maxAge: 7 * 24 * 60 * 60 * 1000,
     });
 
     return {
@@ -62,6 +68,9 @@ export class AuthService {
         email: user.email,
         nickName: user.nickName,
         profileImageUrl: user.profileImageUrl,
+        createdAt: user.createdAt,
+        updatedAt: user.updatedAt,
+        refreshToken: refreshToken,
       },
     };
   }
@@ -149,6 +158,7 @@ export class AuthService {
         email,
         password: hashedPassword,
         nickName,
+        refreshToken: null,
       },
       select: {
         id: true,
@@ -157,6 +167,7 @@ export class AuthService {
         profileImageUrl: true,
         createdAt: true,
         updatedAt: true,
+        refreshToken: true,
       },
     });
   }

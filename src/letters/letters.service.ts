@@ -7,7 +7,6 @@ import { PrismaService } from '../prisma/prisma.service';
 import { CreateLetterDto } from './dto/create-letter.dto';
 import { S3Service } from '../s3/s3.service';
 import { Express } from 'express';
-import { PaginationQueryDto } from './dto/pagination-query.dto';
 import { EmailService } from '../email/email.service';
 
 @Injectable()
@@ -18,7 +17,7 @@ export class LettersService {
     private emailService: EmailService,
   ) {}
 
-  async create(createLetterDto: CreateLetterDto) {
+  async create(createLetterDto: CreateLetterDto, userId?: number) {
     const { receiverId, scheduledAt, senderNickName, ...letterData } =
       createLetterDto;
 
@@ -39,9 +38,16 @@ export class LettersService {
     return this.prisma.letter.create({
       data: {
         ...letterData,
-        senderNickName,
+        senderNickname: senderNickName,
         scheduledAt: scheduledDate,
         isDelivered,
+        ...(userId && {
+          sender: {
+            connect: {
+              id: userId,
+            },
+          },
+        }),
         receiver: {
           connect: {
             id: receiverId,
@@ -50,6 +56,7 @@ export class LettersService {
       },
       include: {
         receiver: true,
+        sender: true,
       },
     });
   }
@@ -100,6 +107,60 @@ export class LettersService {
       this.prisma.letter.findMany({
         where: {
           receiverId: userId,
+        },
+        select: {
+          id: true,
+          title: true,
+          description: true,
+          imageUrl: true,
+          bgmUrl: true,
+          category: true,
+          isOpen: true,
+          isDelivered: true,
+          scheduledAt: true,
+          createdAt: true,
+          updatedAt: true,
+          senderNickname: true,
+          sender: true,
+        },
+        orderBy: {
+          createdAt: 'desc',
+        },
+        skip,
+        take: limit,
+      }),
+      this.prisma.letter.count({
+        where: {
+          receiverId: userId,
+        },
+      }),
+    ]);
+
+    return {
+      items,
+      meta: {
+        total,
+        page,
+        limit,
+        totalPages: Math.ceil(total / limit),
+      },
+    };
+  }
+
+  // 내가 나에게 쓴 편지 목록 조회
+  async getMyLettersToMyself(
+    userId: number,
+    { page, limit }: { page: number; limit: number },
+  ) {
+    const skip = (page - 1) * limit;
+
+    const [items, total] = await Promise.all([
+      this.prisma.letter.findMany({
+        where: {
+          receiverId: userId,
+          sender: {
+            id: userId,
+          },
           isDelivered: true,
         },
         select: {
@@ -114,7 +175,7 @@ export class LettersService {
           scheduledAt: true,
           createdAt: true,
           updatedAt: true,
-          senderNickName: true,
+          senderNickname: true,
         },
         orderBy: {
           createdAt: 'desc',
@@ -125,6 +186,9 @@ export class LettersService {
       this.prisma.letter.count({
         where: {
           receiverId: userId,
+          sender: {
+            id: userId,
+          },
         },
       }),
     ]);

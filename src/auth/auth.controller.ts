@@ -193,6 +193,28 @@ export class AuthController {
     summary: '이메일 인증 코드 발송 API',
     description: '회원가입을 위한 이메일 인증 코드를 발송합니다.',
   })
+  @ApiBody({
+    schema: {
+      type: 'object',
+      properties: {
+        email: {
+          type: 'string',
+          format: 'email',
+          example: 'test@example.com',
+          description: '인증코드를 받을 이메일 주소',
+        },
+      },
+    },
+  })
+  @ApiResponse({
+    status: 200,
+    description: '인증 코드 발송 성공',
+    schema: {
+      example: {
+        message: '인증 코드가 이메일로 발송되었습니다.',
+      },
+    },
+  })
   @Post('send-verification')
   async sendVerification(@Body('email') email: string) {
     return this.authService.sendVerificationCode(email);
@@ -201,6 +223,43 @@ export class AuthController {
   @ApiOperation({
     summary: '이메일 인증 코드 확인 API',
     description: '발송된 이메일 인증 코드를 확인합니다.',
+  })
+  @ApiBody({
+    schema: {
+      type: 'object',
+      properties: {
+        email: {
+          type: 'string',
+          format: 'email',
+          example: 'test@example.com',
+          description: '인증받을 이메일 주소',
+        },
+        code: {
+          type: 'string',
+          example: 'ABC123',
+          description: '수신한 6자리 인증 코드',
+        },
+      },
+    },
+  })
+  @ApiResponse({
+    status: 200,
+    description: '인증 성공',
+    schema: {
+      example: {
+        verified: true,
+      },
+    },
+  })
+  @ApiResponse({
+    status: 400,
+    description: '잘못된 인증 코드 또는 만료된 코드',
+    schema: {
+      example: {
+        statusCode: 400,
+        message: '잘못된 인증 코드 또는 만료된 코드입니다.',
+      },
+    },
   })
   @Post('verify-email')
   async verifyEmail(@Body('email') email: string, @Body('code') code: string) {

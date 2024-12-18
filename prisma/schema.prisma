@@ -6,7 +6,7 @@
 
 generator client {
   provider      = "prisma-client-js"
-  binaryTargets = ["native", "rhel-openssl-1.0.x"]
+  binaryTargets = ["native", "rhel-openssl-1.0.x", "rhel-openssl-3.0.x"]
 }
 
 datasource db {
@@ -28,22 +28,22 @@ model User {
 }
 
 model Letter {
-  id            Int       @id @default(autoincrement())
-  title         String
-  description   String
-  imageUrl      String
-  bgmUrl        String
-  senderNickName String
-  category      Category
-  isOpen        Boolean   @default(false)
-  isDelivered   Boolean   @default(false)
-  scheduledAt   DateTime?
-  createdAt     DateTime  @default(now())
-  updatedAt     DateTime  @updatedAt
-  userId        Int?
-  receiverId    Int
-  user          User?     @relation("SentLetters", fields: [userId], references: [id])
-  receiver      User      @relation("ReceivedLetters", fields: [receiverId], references: [id])
+  id             Int       @id @default(autoincrement())
+  title          String
+  description    String
+  imageUrl       String
+  bgmUrl         String
+  senderNickname String
+  category       Category
+  isOpen         Boolean   @default(false)
+  isDelivered    Boolean   @default(false)
+  scheduledAt    DateTime?
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
+  senderId       Int?
+  receiverId     Int
+  sender         User?     @relation("SentLetters", fields: [senderId], references: [id])
+  receiver       User      @relation("ReceivedLetters", fields: [receiverId], references: [id])
 }
 
 enum Category {
