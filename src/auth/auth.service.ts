@@ -197,20 +197,25 @@ export class AuthService {
   }
 
   async sendVerificationCode(email: string) {
+    // 먼저 이메일 중복 검사
+    const existingUser = await this.prisma.user.findUnique({
+      where: { email },
+    });
+
+    if (existingUser) {
+      throw new ConflictException('이미 사용 중인 이메일입니다.');
+    }
+
     // 6자리 랜덤 코드 생성
     const code = Math.random().toString(36).substring(2, 8).toUpperCase();
-
-    // 10분 후 만료
     const expiresAt = new Date(Date.now() + 10 * 60 * 1000);
 
-    // 기존 인증 정보가 있다면 업데이트, 없다면 생성
     await this.prisma.emailVerification.upsert({
       where: { email },
       update: { code, expiresAt, verified: false },
       create: { email, code, expiresAt },
     });
 
-    // 인증 메일 발송
     await this.emailService.sendVerificationEmail(email, code);
 
     return { message: '인증 코드가 이메일로 발송되었습니다.' };
