@@ -26,6 +26,7 @@ import { Throttle, SkipThrottle } from '@nestjs/throttler';
 import { JwtAuthGuard } from './guards/jwt-auth.guard';
 import { Response } from 'express';
 import { Cookies } from './decorators/cookies.decorator';
+import { getReindeerImageUrl } from '../constants/reindeer-images';
 
 interface RequestWithUser extends Request {
   user: Omit<User, 'password'>;
@@ -48,6 +49,7 @@ export class AuthController {
         id: 10,
         email: 'user1@example.com',
         nickname: 'johndoe1',
+        profileImageUrl: 'https://example.com/images/profile.jpg',
         role: 'USER',
         createdAt: '2024-11-23T07:59:45.179Z',
         updatedAt: '2024-11-23T07:59:45.179Z',
@@ -59,8 +61,16 @@ export class AuthController {
   @Throttle({ default: { limit: 5, ttl: 60 } })
   @Post('register')
   async register(@Body() registerDto: RegisterDto) {
-    const { email, password, nickname } = registerDto;
-    return this.authService.register(email, password, nickname);
+    const { email, password, nickname, skinColor, antlerType, mufflerColor } =
+      registerDto;
+    return this.authService.register(
+      email,
+      password,
+      nickname,
+      skinColor,
+      antlerType,
+      mufflerColor,
+    );
   }
 
   @ApiOperation({
@@ -167,7 +177,7 @@ export class AuthController {
     description: '로그아웃 성공',
     schema: {
       example: {
-        message: '로그아웃 되었습니다.',
+        message: '��그아웃 되었습니다.',
       },
     },
   })
@@ -222,7 +232,7 @@ export class AuthController {
 
   @ApiOperation({
     summary: '이메일 인증 코드 확인 API',
-    description: '발송된 이메일 인증 코드를 확인합니다.',
+    description: '송된 이메일 인증 코드를 확인합니다.',
   })
   @ApiBody({
     schema: {

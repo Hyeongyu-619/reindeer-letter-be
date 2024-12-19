@@ -12,6 +12,12 @@ import { User } from '@prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
 import { Response } from 'express';
 import { EmailService } from '../email/email.service';
+import {
+  AntlerType,
+  getReindeerImageUrl,
+  MufflerColor,
+  ReindeerSkin,
+} from '../constants/reindeer-images';
 
 @Injectable()
 export class AuthService {
@@ -125,7 +131,14 @@ export class AuthService {
     };
   }
 
-  async register(email: string, password: string, nickName: string) {
+  async register(
+    email: string,
+    password: string,
+    nickName: string,
+    skinColor: ReindeerSkin,
+    antlerType: AntlerType,
+    mufflerColor: MufflerColor,
+  ) {
     // 이메일 인증 확인
     const verification = await this.prisma.emailVerification.findUnique({
       where: { email },
@@ -153,11 +166,18 @@ export class AuthService {
 
     // 비밀번호 해시화 및 사용자 생성
     const hashedPassword = await bcrypt.hash(password, 10);
-    return this.prisma.user.create({
+    const profileImageUrl = getReindeerImageUrl({
+      skinColor,
+      antlerType,
+      mufflerColor,
+    });
+
+    const user = await this.prisma.user.create({
       data: {
         email,
         password: hashedPassword,
         nickName,
+        profileImageUrl,
         refreshToken: null,
       },
       select: {
@@ -170,6 +190,8 @@ export class AuthService {
         refreshToken: true,
       },
     });
+
+    return user;
   }
 
   async checkEmailDuplicate(email: string) {
