@@ -26,7 +26,12 @@ import { Throttle, SkipThrottle } from '@nestjs/throttler';
 import { JwtAuthGuard } from './guards/jwt-auth.guard';
 import { Response } from 'express';
 import { Cookies } from './decorators/cookies.decorator';
-import { getReindeerImageUrl } from '../constants/reindeer-images';
+import {
+  AntlerType,
+  getReindeerImageUrl,
+  MufflerColor,
+  ReindeerSkin,
+} from '../constants/reindeer-images';
 
 interface RequestWithUser extends Request {
   user: Omit<User, 'password'>;
@@ -177,7 +182,7 @@ export class AuthController {
     description: '로그아웃 성공',
     schema: {
       example: {
-        message: '��그아웃 되었습니다.',
+        message: '로그아웃 되었습니다.',
       },
     },
   })
@@ -274,5 +279,73 @@ export class AuthController {
   @Post('verify-email')
   async verifyEmail(@Body('email') email: string, @Body('code') code: string) {
     return this.authService.verifyEmail(email, code);
+  }
+
+  @ApiBearerAuth('access-token')
+  @ApiOperation({
+    summary: '프로필 정보 조회 API',
+    description: '본인의 프로필 정보를 조회합니다.',
+  })
+  @ApiResponse({
+    status: 200,
+    description: '프로필 정보 조회 성공',
+    schema: {
+      example: {
+        id: 1,
+        email: 'user@example.com',
+        nickName: 'johndoe',
+        profileImageUrl: 'https://example.com/images/profile.jpg',
+      },
+    },
+  })
+  @UseGuards(JwtAuthGuard)
+  @Get('profile')
+  async getProfile(@Request() req: RequestWithUser) {
+    const userId = req.user?.id;
+    if (!userId) {
+      throw new UnauthorizedException('사용자 정보를 찾을 수 없습니다.');
+    }
+    return this.authService.getProfile(userId);
+  }
+
+  @ApiOperation({
+    summary: '순록 미리보기 API',
+    description: '선택한 옵션에 따라 순록 이미지를 미리보기합니다.',
+  })
+  @ApiQuery({
+    name: 'skinColor',
+    required: true,
+    description: '순록 스킨 색상',
+  })
+  @ApiQuery({
+    name: 'antlerType',
+    required: true,
+    description: '뿔 타입',
+  })
+  @ApiQuery({
+    name: 'mufflerColor',
+    required: true,
+    description: '목도리 색상',
+  })
+  @ApiResponse({
+    status: 200,
+    description: '미리보기 이미지 URL',
+    schema: {
+      example: {
+        imageUrl: 'https://example.com/images/reindeer_preview.jpg',
+      },
+    },
+  })
+  @Get('reindeer-preview')
+  async getReindeerPreview(
+    @Query('skinColor') skinColor: ReindeerSkin,
+    @Query('antlerType') antlerType: AntlerType,
+    @Query('mufflerColor') mufflerColor: MufflerColor,
+  ) {
+    return this.authService.getReindeerPreview(
+      skinColor,
+      antlerType,
+      mufflerColor,
+    );
   }
 }

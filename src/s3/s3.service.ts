@@ -39,6 +39,7 @@ export class S3Service {
   ): Promise<string> {
     try {
       const bucket = process.env.AWS_S3_BUCKET;
+
       if (!bucket) {
         throw new InternalServerErrorException(
           'AWS S3 버킷이 설정되지 않았습니다.',

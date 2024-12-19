@@ -38,6 +38,8 @@ model Letter {
   senderNickname String
   receiver       User      @relation("ReceivedLetters", fields: [receiverId], references: [id])
   sender         User?     @relation("SentLetters", fields: [senderId], references: [id])
+  isDraft        Boolean   @default(false)
+  draftData      Json?     // JSON 타입으로 임시저장 데이터 저장
 }
 
 model EmailVerification {

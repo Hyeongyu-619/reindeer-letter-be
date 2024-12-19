@@ -21,7 +21,7 @@ export class LoginDto {
     example: 'test1',
     description: '사용자 비밀번호 (최소 6자)',
     required: true,
-    minLength: 8,
+    minLength: 6,
     maxLength: 20,
   })
   @IsString()

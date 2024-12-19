@@ -8,6 +8,8 @@ import { CreateLetterDto } from './dto/create-letter.dto';
 import { S3Service } from '../s3/s3.service';
 import { Express } from 'express';
 import { EmailService } from '../email/email.service';
+import { SaveDraftLetterDto } from './dto/save-draft-letter.dto';
+import { Category } from '@prisma/client';
 
 @Injectable()
 export class LettersService {
@@ -42,21 +44,12 @@ export class LettersService {
         scheduledAt: scheduledDate,
         isDelivered,
         ...(userId && {
-          sender: {
-            connect: {
-              id: userId,
-            },
-          },
+          senderId: userId,
         }),
-        receiver: {
-          connect: {
-            id: receiverId,
-          },
-        },
+        receiverId,
       },
       include: {
         receiver: true,
-        sender: true,
       },
     });
   }
@@ -99,15 +92,22 @@ export class LettersService {
   // 내가 받은 편지 목록 조회
   async getMyLetters(
     userId: number,
-    { page, limit }: { page: number; limit: number },
+    {
+      page,
+      limit,
+      category,
+    }: { page: number; limit: number; category?: Category },
   ) {
     const skip = (page - 1) * limit;
 
+    const whereClause = {
+      receiverId: userId,
+      ...(category && { category }),
+    };
+
     const [items, total] = await Promise.all([
       this.prisma.letter.findMany({
-        where: {
-          receiverId: userId,
-        },
+        where: whereClause,
         select: {
           id: true,
           title: true,
@@ -121,7 +121,6 @@ export class LettersService {
           createdAt: true,
           updatedAt: true,
           senderNickname: true,
-          sender: true,
         },
         orderBy: {
           createdAt: 'desc',
@@ -130,9 +129,7 @@ export class LettersService {
         take: limit,
       }),
       this.prisma.letter.count({
-        where: {
-          receiverId: userId,
-        },
+        where: whereClause,
       }),
     ]);
 
@@ -158,9 +155,7 @@ export class LettersService {
       this.prisma.letter.findMany({
         where: {
           receiverId: userId,
-          sender: {
-            id: userId,
-          },
+          senderId: userId,
           isDelivered: true,
         },
         select: {
@@ -186,9 +181,7 @@ export class LettersService {
       this.prisma.letter.count({
         where: {
           receiverId: userId,
-          sender: {
-            id: userId,
-          },
+          senderId: userId,
         },
       }),
     ]);
@@ -256,6 +249,184 @@ export class LettersService {
     return {
       processedCount: results.length,
       letters: results,
+    };
+  }
+
+  async saveDraft(
+    draftData: SaveDraftLetterDto,
+    userId: number,
+    draftId?: number,
+  ) {
+    if (draftId) {
+      return this.prisma.letter
+        .findFirst({
+          where: {
+            id: draftId,
+            senderId: userId,
+          },
+        })
+        .then((letter) => {
+          if (!letter) {
+            throw new NotFoundException('임시저장 편지를 찾을 수 없습니다.');
+          }
+          return this.prisma.letter.update({
+            where: { id: draftId },
+            data: {
+              draftData: draftData as any,
+              updatedAt: new Date(),
+            },
+          });
+        });
+    }
+
+    return this.prisma.letter.create({
+      data: {
+        title: draftData.title || '임시저장',
+        description: draftData.description || '',
+        imageUrl: draftData.imageUrl || '',
+        bgmUrl: draftData.bgmUrl || '',
+        category: draftData.category || 'TEXT',
+        senderNickname: draftData.senderNickName || '익명',
+        senderId: userId,
+        receiverId: draftData.receiverId || userId,
+        isDraft: true,
+        draftData: draftData as any,
+      },
+    });
+  }
+
+  async getDrafts(userId: number) {
+    return this.prisma.letter.findMany({
+      where: {
+        senderId: userId,
+        isDraft: true,
+      },
+      orderBy: {
+        updatedAt: 'desc',
+      },
+    });
+  }
+
+  async getDraft(draftId: number, userId: number) {
+    const draft = await this.prisma.letter.findFirst({
+      where: {
+        id: draftId,
+        senderId: userId,
+        isDraft: true,
+      },
+    });
+
+    if (!draft) {
+      throw new NotFoundException('임시저장된 편지를 찾을 수 없습니다.');
+    }
+
+    return draft;
+  }
+
+  // 임시저장 편지 목록 조회 (페이지네이션)
+  async getDraftLetters(
+    userId: number,
+    { page, limit }: { page: number; limit: number },
+  ) {
+    const skip = (page - 1) * limit;
+
+    const [items, total] = await Promise.all([
+      this.prisma.letter.findMany({
+        where: {
+          senderId: userId,
+          isDraft: true,
+        },
+        select: {
+          id: true,
+          title: true,
+          description: true,
+          imageUrl: true,
+          bgmUrl: true,
+          category: true,
+          draftData: true,
+          createdAt: true,
+          updatedAt: true,
+          receiverId: true,
+          senderNickname: true,
+        },
+        orderBy: {
+          updatedAt: 'desc',
+        },
+        skip,
+        take: limit,
+      }),
+      this.prisma.letter.count({
+        where: {
+          senderId: userId,
+          isDraft: true,
+        },
+      }),
+    ]);
+
+    return {
+      items,
+      meta: {
+        total,
+        page,
+        limit,
+        totalPages: Math.ceil(total / limit),
+      },
+    };
+  }
+
+  // 카테고리별 편지 목록 조회
+  async getLettersByCategory(
+    userId: number,
+    category: Category,
+    { page, limit }: { page: number; limit: number },
+  ) {
+    const skip = (page - 1) * limit;
+
+    const [items, total] = await Promise.all([
+      this.prisma.letter.findMany({
+        where: {
+          receiverId: userId,
+          category,
+          isDraft: false,
+          isDelivered: true,
+        },
+        select: {
+          id: true,
+          title: true,
+          description: true,
+          imageUrl: true,
+          bgmUrl: true,
+          category: true,
+          isOpen: true,
+          scheduledAt: true,
+          createdAt: true,
+          updatedAt: true,
+          senderNickname: true,
+        },
+        orderBy: {
+          createdAt: 'desc',
+        },
+        skip,
+        take: limit,
+      }),
+      this.prisma.letter.count({
+        where: {
+          receiverId: userId,
+          category,
+          isDraft: false,
+          isDelivered: true,
+        },
+      }),
+    ]);
+
+    return {
+      items,
+      meta: {
+        total,
+        page,
+        limit,
+        totalPages: Math.ceil(total / limit),
+      },
     };
   }
 }

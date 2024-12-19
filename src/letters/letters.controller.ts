@@ -24,9 +24,12 @@ import {
   ApiBearerAuth,
   ApiConsumes,
   ApiBody,
+  ApiQuery,
 } from '@nestjs/swagger';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { Express } from 'express';
+import { SaveDraftLetterDto } from './dto/save-draft-letter.dto';
+import { Category } from '@prisma/client';
 
 interface RequestWithUser extends Request {
   user: {
@@ -76,7 +79,26 @@ export class LettersController {
 
   @ApiOperation({
     summary: '내 편지 목록 조회 API',
-    description: '자신이 받은 편지 목록을 페이지네이션하여 조회합니다.',
+    description:
+      '자신이 받은 편지 목록을 페이지네이션하여 조회합니다. 카테고리로 필터링도 가능합니다.',
+  })
+  @ApiQuery({
+    name: 'page',
+    required: false,
+    description: '페이지 번호 (기본값: 1)',
+    type: Number,
+  })
+  @ApiQuery({
+    name: 'limit',
+    required: false,
+    description: '페이지당 항목 수 (기본값: 10)',
+    type: Number,
+  })
+  @ApiQuery({
+    name: 'category',
+    required: false,
+    description: '편지 카테고리 필터 (TEXT 또는 VOICE)',
+    enum: Category,
   })
   @ApiBearerAuth('access-token')
   @UseGuards(JwtAuthGuard)
@@ -88,6 +110,7 @@ export class LettersController {
     // 쿼리 파라미터 수동 변환
     const page = query.page ? parseInt(query.page, 10) : 1;
     const limit = query.limit ? parseInt(query.limit, 10) : 10;
+    const category = query.category as Category | undefined;
 
     // 유효성 검사
     if (isNaN(page) || page < 1) {
@@ -99,7 +122,16 @@ export class LettersController {
       );
     }
 
-    return this.lettersService.getMyLetters(req.user.userId, { page, limit });
+    // 카테고리 유효성 검사
+    if (category && !Object.values(Category).includes(category)) {
+      throw new BadRequestException('유효하지 않은 카테고리입니다.');
+    }
+
+    return this.lettersService.getMyLetters(req.user.userId, {
+      page,
+      limit,
+      category,
+    });
   }
 
   @ApiOperation({
@@ -213,7 +245,7 @@ export class LettersController {
 
   @ApiOperation({
     summary: '내가 나에게 쓴 편지 목록 조회 API',
-    description: '자신이 자신에게 쓴 편�� 목록을 페이지네이션하여 조회합니다.',
+    description: '자신이 자신에게 쓴 편지 목록을 페이지네이션하여 조회합니다.',
   })
   @ApiBearerAuth('access-token')
   @UseGuards(JwtAuthGuard)
@@ -235,6 +267,76 @@ export class LettersController {
     }
 
     return this.lettersService.getMyLettersToMyself(req.user.userId, {
+      page,
+      limit,
+    });
+  }
+
+  @ApiOperation({
+    summary: '편지 임시저장 API',
+    description: '편지를 임시저장합니다.',
+  })
+  @Post('draft')
+  @UseGuards(JwtAuthGuard)
+  @ApiBearerAuth('access-token')
+  async saveDraft(
+    @Body() draftData: SaveDraftLetterDto,
+    @Request() req: RequestWithUser,
+    @Query('draftId') draftId?: string,
+  ) {
+    return this.lettersService.saveDraft(
+      draftData,
+      req.user.userId,
+      draftId ? +draftId : undefined,
+    );
+  }
+
+  @ApiOperation({
+    summary: '임시저장 편지 목록 조회 API',
+    description: '임시저장된 편지 목록을 조회합니다.',
+  })
+  @Get('drafts')
+  @UseGuards(JwtAuthGuard)
+  @ApiBearerAuth('access-token')
+  getDrafts(@Request() req: RequestWithUser) {
+    return this.lettersService.getDrafts(req.user.userId);
+  }
+
+  @ApiOperation({
+    summary: '임시저장 편지 조회 API',
+    description: '특정 임시저장 편지를 조회합니다.',
+  })
+  @Get('draft/:id')
+  @UseGuards(JwtAuthGuard)
+  @ApiBearerAuth('access-token')
+  getDraft(@Param('id') id: string, @Request() req: RequestWithUser) {
+    return this.lettersService.getDraft(+id, req.user.userId);
+  }
+
+  @ApiOperation({
+    summary: '임시저장 편지 목록 조회 API (페이지네이션)',
+    description: '임시저장된 편지 목록을 페이지네이션하여 조회합니다.',
+  })
+  @Get('drafts/paginated')
+  @UseGuards(JwtAuthGuard)
+  @ApiBearerAuth('access-token')
+  getDraftLetters(
+    @Request() req: RequestWithUser,
+    @Query() query: Record<string, any>,
+  ) {
+    const page = query.page ? parseInt(query.page, 10) : 1;
+    const limit = query.limit ? parseInt(query.limit, 10) : 10;
+
+    if (isNaN(page) || page < 1) {
+      throw new BadRequestException('페이지 번호는 1 이상의 숫자여야 합니다.');
+    }
+    if (isNaN(limit) || limit < 1) {
+      throw new BadRequestException(
+        '페이지당 항목 수는 1 이상의 숫자여야 합니다.',
+      );
+    }
+
+    return this.lettersService.getDraftLetters(req.user.userId, {
       page,
       limit,
     });

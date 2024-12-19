@@ -19,6 +19,13 @@ import {
   ReindeerSkin,
 } from '../constants/reindeer-images';
 
+interface RequestWithUser extends Request {
+  user: {
+    userId: number;
+    email: string;
+  };
+}
+
 @Injectable()
 export class AuthService {
   constructor(
@@ -28,6 +35,8 @@ export class AuthService {
   ) {}
 
   async validateUser(email: string, password: string): Promise<any> {
+    console.log('Login attempt:', { email }); // 로그인 시도 기록
+
     const user = await this.prisma.user.findUnique({
       where: { email },
       select: {
@@ -42,9 +51,16 @@ export class AuthService {
       },
     });
 
-    if (user && (await bcrypt.compare(password, user.password))) {
-      const { password: _, ...result } = user;
-      return result;
+    console.log('User found:', !!user); // 사용자 찾았는지 확인
+
+    if (user) {
+      const isPasswordValid = await bcrypt.compare(password, user.password);
+      console.log('Password valid:', isPasswordValid); // 비밀번호 일치 여부 확인
+
+      if (isPasswordValid) {
+        const { password: _, ...result } = user;
+        return result;
+      }
     }
     return null;
   }
@@ -153,7 +169,7 @@ export class AuthService {
       where: { email },
     });
     if (existingEmail) {
-      throw new ConflictException('이미 사용 중인 이메일입니다.');
+      throw new ConflictException('이미 사��� 중인 이메일입니다.');
     }
 
     // 닉네임 중복 체크
@@ -266,5 +282,37 @@ export class AuthService {
     });
 
     return { verified: true };
+  }
+
+  async getProfile(userId: number) {
+    const user = await this.prisma.user.findUnique({
+      where: { id: userId },
+      select: {
+        id: true,
+        email: true,
+        nickName: true,
+        profileImageUrl: true,
+      },
+    });
+
+    if (!user) {
+      throw new NotFoundException('사용자를 찾을 수 없습니다.');
+    }
+
+    return user;
+  }
+
+  async getReindeerPreview(
+    skinColor: ReindeerSkin,
+    antlerType: AntlerType,
+    mufflerColor: MufflerColor,
+  ) {
+    const imageUrl = getReindeerImageUrl({
+      skinColor,
+      antlerType,
+      mufflerColor,
+    });
+
+    return { imageUrl };
   }
 }
