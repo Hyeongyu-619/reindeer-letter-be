@@ -13,6 +13,7 @@ import {
   FileTypeValidator,
   Query,
   BadRequestException,
+  UnauthorizedException,
 } from '@nestjs/common';
 import { LettersService } from './letters.service';
 import { CreateLetterDto } from './dto/create-letter.dto';
@@ -33,7 +34,8 @@ import { Category } from '@prisma/client';
 
 interface RequestWithUser extends Request {
   user: {
-    userId: number;
+    id: number;
+    email: string;
   };
 }
 
@@ -73,7 +75,7 @@ export class LettersController {
     @Body() createLetterDto: CreateLetterDto,
     @Request() req: RequestWithUser,
   ) {
-    const userId = req.user?.userId;
+    const userId = req.user?.id;
     return this.lettersService.create(createLetterDto, userId);
   }
 
@@ -107,7 +109,13 @@ export class LettersController {
     @Request() req: RequestWithUser,
     @Query() query: Record<string, any>,
   ) {
-    // 쿼리 파라미터 수동 변환
+    console.log('전체 req.user:', req.user);
+    console.log('id:', req.user?.id);
+
+    if (!req.user?.id) {
+      throw new UnauthorizedException('사용자 정보를 찾을 수 없습니다.');
+    }
+
     const page = query.page ? parseInt(query.page, 10) : 1;
     const limit = query.limit ? parseInt(query.limit, 10) : 10;
     const category = query.category as Category | undefined;
@@ -127,7 +135,7 @@ export class LettersController {
       throw new BadRequestException('유효하지 않은 카테고리입니다.');
     }
 
-    return this.lettersService.getMyLetters(req.user.userId, {
+    return this.lettersService.getMyLetters(req.user.id, {
       page,
       limit,
       category,
@@ -154,7 +162,7 @@ export class LettersController {
   @UseGuards(JwtAuthGuard)
   @Get(':id')
   findOne(@Param('id') id: string, @Request() req: RequestWithUser) {
-    return this.lettersService.findOne(+id, req.user.userId);
+    return this.lettersService.findOne(+id, req.user.id);
   }
 
   @ApiOperation({
@@ -266,7 +274,7 @@ export class LettersController {
       );
     }
 
-    return this.lettersService.getMyLettersToMyself(req.user.userId, {
+    return this.lettersService.getMyLettersToMyself(req.user.id, {
       page,
       limit,
     });
@@ -286,7 +294,7 @@ export class LettersController {
   ) {
     return this.lettersService.saveDraft(
       draftData,
-      req.user.userId,
+      req.user.id,
       draftId ? +draftId : undefined,
     );
   }
@@ -299,7 +307,7 @@ export class LettersController {
   @UseGuards(JwtAuthGuard)
   @ApiBearerAuth('access-token')
   getDrafts(@Request() req: RequestWithUser) {
-    return this.lettersService.getDrafts(req.user.userId);
+    return this.lettersService.getDrafts(req.user.id);
   }
 
   @ApiOperation({
@@ -310,7 +318,7 @@ export class LettersController {
   @UseGuards(JwtAuthGuard)
   @ApiBearerAuth('access-token')
   getDraft(@Param('id') id: string, @Request() req: RequestWithUser) {
-    return this.lettersService.getDraft(+id, req.user.userId);
+    return this.lettersService.getDraft(+id, req.user.id);
   }
 
   @ApiOperation({
@@ -336,7 +344,7 @@ export class LettersController {
       );
     }
 
-    return this.lettersService.getDraftLetters(req.user.userId, {
+    return this.lettersService.getDraftLetters(req.user.id, {
       page,
       limit,
     });

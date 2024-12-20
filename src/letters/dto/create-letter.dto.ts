@@ -32,7 +32,7 @@ export class CreateLetterDto {
     description: '이미지 URL',
   })
   @IsString()
-  @IsNotEmpty()
+  @IsOptional()
   imageUrl: string;
 
   @ApiProperty({
@@ -40,7 +40,7 @@ export class CreateLetterDto {
     description: 'BGM URL',
   })
   @IsString()
-  @IsNotEmpty()
+  @IsOptional()
   bgmUrl: string;
 
   @ApiProperty({
@@ -55,7 +55,7 @@ export class CreateLetterDto {
     example: 1,
     description: '수신자 ID',
   })
-  @IsNotEmpty()
+  @IsOptional()
   @IsNumber()
   receiverId: number;
 

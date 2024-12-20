@@ -100,8 +100,11 @@ export class LettersService {
   ) {
     const skip = (page - 1) * limit;
 
+    console.log(userId);
+
     const whereClause = {
       receiverId: userId,
+      isDraft: false,
       ...(category && { category }),
     };
 
@@ -121,6 +124,14 @@ export class LettersService {
           createdAt: true,
           updatedAt: true,
           senderNickname: true,
+          receiver: {
+            select: {
+              id: true,
+              email: true,
+              nickName: true,
+              profileImageUrl: true,
+            },
+          },
         },
         orderBy: {
           createdAt: 'desc',
@@ -266,7 +277,7 @@ export class LettersService {
         })
         .then((letter) => {
           if (!letter) {
-            throw new NotFoundException('임시저장 편지를 찾을 수 없습니다.');
+            throw new NotFoundException('임시저장 편지를 ��을 수 없습니다.');
           }
           return this.prisma.letter.update({
             where: { id: draftId },
