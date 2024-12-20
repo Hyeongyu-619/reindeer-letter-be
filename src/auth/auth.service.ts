@@ -402,6 +402,7 @@ export class AuthService {
         createdAt: true,
         updatedAt: true,
         refreshToken: true,
+        kakaoId: true,
       },
     });
 
@@ -488,6 +489,7 @@ export class AuthService {
         createdAt: true,
         updatedAt: true,
         refreshToken: true,
+        googleId: true,
       },
     });
 

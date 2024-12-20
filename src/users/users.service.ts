@@ -5,7 +5,6 @@ import {
   NotFoundException,
 } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
-import { User } from '@prisma/client';
 
 @Injectable()
 export class UsersService {
@@ -23,6 +22,8 @@ export class UsersService {
         createdAt: true,
         updatedAt: true,
         refreshToken: true,
+        kakaoId: true,
+        googleId: true,
       },
     });
   }
@@ -39,6 +40,8 @@ export class UsersService {
         createdAt: true,
         updatedAt: true,
         refreshToken: true,
+        kakaoId: true,
+        googleId: true,
       },
     });
 
@@ -60,6 +63,8 @@ export class UsersService {
         createdAt: true,
         updatedAt: true,
         refreshToken: true,
+        kakaoId: true,
+        googleId: true,
       },
     });
 
@@ -67,14 +72,11 @@ export class UsersService {
       throw new NotFoundException('사용자를 찾을 수 없습니다.');
     }
 
-    return user;
+    const { kakaoId, googleId, ...userWithoutSocial } = user;
+    return userWithoutSocial;
   }
 
-  async create(data: {
-    email: string;
-    password: string;
-    nickname: string;
-  }): Promise<Omit<User, 'password'>> {
+  async create(data: { email: string; password: string; nickname: string }) {
     try {
       const user = await this.prisma.user.create({
         data: {
