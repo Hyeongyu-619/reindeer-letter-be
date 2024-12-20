@@ -17,6 +17,7 @@ model User {
   profileImageUrl String?
   updatedAt       DateTime @updatedAt
   refreshToken    String?
+  kakaoId         String?
   receivedLetters Letter[] @relation("ReceivedLetters")
   sentLetters     Letter[] @relation("SentLetters")
 }

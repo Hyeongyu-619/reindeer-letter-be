@@ -26,6 +26,12 @@ interface RequestWithUser extends Request {
   };
 }
 
+interface KakaoUserDto {
+  kakaoId: string;
+  email: string;
+  nickname: string;
+}
+
 @Injectable()
 export class AuthService {
   constructor(
@@ -324,5 +330,95 @@ export class AuthService {
     });
 
     return { imageUrl };
+  }
+
+  async findOrCreateKakaoUser(kakaoUserDto: KakaoUserDto) {
+    const { kakaoId, email, nickname } = kakaoUserDto;
+
+    // 기존 유저 찾기
+    const existingUser = await this.prisma.user.findFirst({
+      where: {
+        OR: [{ kakaoId }, { email }],
+      },
+    });
+
+    if (existingUser) {
+      // 기존 유저는 바로 로그인 처리
+      const tokens = await this.generateToken(existingUser);
+      return {
+        isNewUser: false,
+        user: existingUser,
+        ...tokens,
+      };
+    }
+
+    // 새로운 유저는 추가 정보 입력이 필요
+    return {
+      isNewUser: true,
+      userData: {
+        kakaoId,
+        email,
+        nickname,
+      },
+    };
+  }
+
+  // 소셜 회원가입용 새로운 메소드
+  async registerKakaoUser(
+    kakaoId: string,
+    email: string,
+    additionalData: {
+      nickname: string;
+      skinColor: ReindeerSkin;
+      antlerType: AntlerType;
+      mufflerColor: MufflerColor;
+    },
+  ) {
+    const profileImageUrl = getReindeerImageUrl({
+      skinColor: additionalData.skinColor,
+      antlerType: additionalData.antlerType,
+      mufflerColor: additionalData.mufflerColor,
+    });
+
+    const user = await this.prisma.user.create({
+      data: {
+        email,
+        kakaoId,
+        nickName: additionalData.nickname,
+        password: '', // 소셜 로그인은 비밀번호 불필요
+        profileImageUrl,
+      },
+      select: {
+        id: true,
+        email: true,
+        nickName: true,
+        profileImageUrl: true,
+        createdAt: true,
+        updatedAt: true,
+        refreshToken: true,
+      },
+    });
+
+    const tokens = await this.generateToken(user);
+    return {
+      user,
+      ...tokens,
+    };
+  }
+
+  private async generateToken(user: any) {
+    const payload = { sub: user.id, email: user.email };
+    const accessToken = this.jwtService.sign(payload, { expiresIn: '1h' });
+    const refreshToken = this.jwtService.sign(payload, { expiresIn: '7d' });
+
+    await this.prisma.user.update({
+      where: { id: user.id },
+      data: { refreshToken },
+    });
+
+    return {
+      access_token: accessToken,
+      refresh_token: refreshToken,
+    };
   }
 }

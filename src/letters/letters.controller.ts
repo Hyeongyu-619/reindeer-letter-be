@@ -255,7 +255,7 @@ export class LettersController {
 
   @ApiOperation({
     summary: '내가 나에게 쓴 편지 목록 조회 API',
-    description: '자신이 자신에게 쓴 편지 목록을 페이지네이���하여 조회합니다.',
+    description: '자신이 자신에게 쓴 편지 목록을 페이지네이션하여 조회합니다.',
   })
   @ApiBearerAuth('access-token')
   @UseGuards(JwtAuthGuard)
@@ -303,7 +303,7 @@ export class LettersController {
 
   @ApiOperation({
     summary: '임시저장 편지 목록 조회 API',
-    description: '임시저장된 편지 ���록을 조회합니다.',
+    description: '임시저장된 편지 목록을 조회합니다.',
   })
   @Get('drafts')
   @UseGuards(JwtAuthGuard)
