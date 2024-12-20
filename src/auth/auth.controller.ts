@@ -32,6 +32,8 @@ import {
   MufflerColor,
   ReindeerSkin,
 } from '../constants/reindeer-images';
+import { KakaoAuthGuard } from './guards/kakao-auth.guard';
+import { GoogleAuthGuard } from './guards/google-auth.guard';
 
 interface RequestWithUser extends Request {
   user: Omit<User, 'password'>;
@@ -357,6 +359,76 @@ export class AuthController {
       skinColor,
       antlerType,
       mufflerColor,
+    );
+  }
+
+  @Get('kakao')
+  @UseGuards(KakaoAuthGuard)
+  @ApiOperation({
+    summary: '카카오 로그인 API',
+    description: '카카오 OAuth를 통한 로그인을 시작합니다.',
+  })
+  async kakaoLogin() {
+    // 카카오 로그인 페이지로 리다이렉트
+  }
+
+  @Get('kakao/callback')
+  @UseGuards(KakaoAuthGuard)
+  @ApiOperation({
+    summary: '카카오 로그인 콜백 API',
+    description: '카카오 OAuth 인증 후 처리를 담당합니다.',
+  })
+  async kakaoLoginCallback(
+    @Request() req: RequestWithUser,
+    @Res({ passthrough: true }) res: Response,
+  ) {
+    if (!req.user) {
+      throw new UnauthorizedException('카카오 인증에 실패했습니다.');
+    }
+    return this.authService.login(req.user, res);
+  }
+
+  @Get('google')
+  @UseGuards(GoogleAuthGuard)
+  @ApiOperation({
+    summary: '구글 로그인 API',
+    description: '구글 OAuth를 통한 로그인을 시작합니다.',
+  })
+  async googleLogin() {
+    // 구글 로그인 페이지로 리다이렉트
+  }
+
+  @Get('google/callback')
+  @UseGuards(GoogleAuthGuard)
+  @ApiOperation({
+    summary: '구글 로그인 콜백 API',
+    description: '구글 OAuth 인증 후 처리를 담당합니다.',
+  })
+  async googleLoginCallback(
+    @Request() req: RequestWithUser,
+    @Res({ passthrough: true }) res: Response,
+  ) {
+    return this.authService.login(req.user, res);
+  }
+
+  @Post('google/register')
+  async registerGoogleUser(
+    @Body()
+    registerDto: {
+      googleId: string;
+      email: string;
+      additionalData: {
+        nickname: string;
+        skinColor: ReindeerSkin;
+        antlerType: AntlerType;
+        mufflerColor: MufflerColor;
+      };
+    },
+  ) {
+    return this.authService.registerGoogleUser(
+      registerDto.googleId,
+      registerDto.email,
+      registerDto.additionalData,
     );
   }
 }

@@ -32,6 +32,12 @@ interface KakaoUserDto {
   nickname: string;
 }
 
+interface GoogleUserDto {
+  googleId: string;
+  email: string;
+  nickname: string;
+}
+
 @Injectable()
 export class AuthService {
   constructor(
@@ -419,6 +425,76 @@ export class AuthService {
     return {
       access_token: accessToken,
       refresh_token: refreshToken,
+    };
+  }
+
+  async findOrCreateGoogleUser(googleUserDto: GoogleUserDto) {
+    const { googleId, email, nickname } = googleUserDto;
+
+    const existingUser = await this.prisma.user.findFirst({
+      where: {
+        OR: [{ googleId }, { email }],
+      },
+    });
+
+    if (existingUser) {
+      const tokens = await this.generateToken(existingUser);
+      return {
+        isNewUser: false,
+        user: existingUser,
+        ...tokens,
+      };
+    }
+
+    return {
+      isNewUser: true,
+      userData: {
+        googleId,
+        email,
+        nickname,
+      },
+    };
+  }
+
+  async registerGoogleUser(
+    googleId: string,
+    email: string,
+    additionalData: {
+      nickname: string;
+      skinColor: ReindeerSkin;
+      antlerType: AntlerType;
+      mufflerColor: MufflerColor;
+    },
+  ) {
+    const profileImageUrl = getReindeerImageUrl({
+      skinColor: additionalData.skinColor,
+      antlerType: additionalData.antlerType,
+      mufflerColor: additionalData.mufflerColor,
+    });
+
+    const user = await this.prisma.user.create({
+      data: {
+        email,
+        googleId,
+        nickName: additionalData.nickname,
+        password: '',
+        profileImageUrl,
+      },
+      select: {
+        id: true,
+        email: true,
+        nickName: true,
+        profileImageUrl: true,
+        createdAt: true,
+        updatedAt: true,
+        refreshToken: true,
+      },
+    });
+
+    const tokens = await this.generateToken(user);
+    return {
+      user,
+      ...tokens,
     };
   }
 }

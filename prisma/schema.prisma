@@ -18,6 +18,7 @@ model User {
   updatedAt       DateTime @updatedAt
   refreshToken    String?
   kakaoId         String?
+  googleId        String? @unique
   receivedLetters Letter[] @relation("ReceivedLetters")
   sentLetters     Letter[] @relation("SentLetters")
 }

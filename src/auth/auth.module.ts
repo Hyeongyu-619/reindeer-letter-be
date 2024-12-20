@@ -8,6 +8,7 @@ import { UsersModule } from '../users/users.module';
 import { EmailModule } from '../email/email.module';
 import * as devConfig from '../../dev.json';
 import { KakaoStrategy } from './strategies/kakao.strategy';
+import { GoogleStrategy } from './strategies/google.strategy';
 
 @Module({
   imports: [
@@ -19,7 +20,13 @@ import { KakaoStrategy } from './strategies/kakao.strategy';
     }),
   ],
   controllers: [AuthController],
-  providers: [AuthService, JwtStrategy, LocalStrategy, KakaoStrategy],
+  providers: [
+    AuthService,
+    JwtStrategy,
+    LocalStrategy,
+    KakaoStrategy,
+    GoogleStrategy,
+  ],
   exports: [AuthService],
 })
 export class AuthModule {}

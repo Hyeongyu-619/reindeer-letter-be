@@ -11,6 +11,7 @@ export class KakaoStrategy extends PassportStrategy(Strategy) {
       clientID: devConfig.KAKAO_CLIENT_ID,
       clientSecret: devConfig.KAKAO_CLIENT_SECRET,
       callbackURL: devConfig.KAKAO_CALLBACK_URL,
+      scope: ['account_email'],
     });
   }
 
@@ -22,9 +23,13 @@ export class KakaoStrategy extends PassportStrategy(Strategy) {
     const { id, username, _json } = profile;
     const email = _json?.kakao_account?.email;
 
+    if (!email) {
+      throw new Error('이메일 제공에 동의해주세요.');
+    }
+
     const user = await this.authService.findOrCreateKakaoUser({
       kakaoId: id,
-      email: email || `kakao_${id}@reindeer.com`,
+      email,
       nickname: username || `사용자${id}`,
     });
 
