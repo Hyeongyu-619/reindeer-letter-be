@@ -147,16 +147,20 @@ export class LettersService {
   // 내가 나에게 쓴 편지 목록 조회
   async getMyLettersToMyself(
     userId: number,
-    { page, limit }: { page: number; limit: number },
+    options: { page: number; limit: number },
   ) {
-    const skip = (page - 1) * limit;
+    const skip = (options.page - 1) * options.limit;
 
     const [items, total] = await Promise.all([
       this.prisma.letter.findMany({
         where: {
           receiverId: userId,
           senderId: userId,
-          isDelivered: true,
+        },
+        skip,
+        take: options.limit,
+        orderBy: {
+          createdAt: 'desc',
         },
         select: {
           id: true,
@@ -172,11 +176,6 @@ export class LettersService {
           updatedAt: true,
           senderNickname: true,
         },
-        orderBy: {
-          createdAt: 'desc',
-        },
-        skip,
-        take: limit,
       }),
       this.prisma.letter.count({
         where: {
@@ -190,9 +189,9 @@ export class LettersService {
       items,
       meta: {
         total,
-        page,
-        limit,
-        totalPages: Math.ceil(total / limit),
+        page: options.page,
+        limit: options.limit,
+        totalPages: Math.ceil(total / options.limit),
       },
     };
   }

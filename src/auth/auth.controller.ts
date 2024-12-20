@@ -193,15 +193,26 @@ export class AuthController {
     @Request() req: RequestWithUser,
     @Res({ passthrough: true }) res: Response,
   ) {
-    // refresh_token 쿠키 제거
-    res.clearCookie('refresh_token', {
-      httpOnly: true,
-      secure: process.env.NODE_ENV === 'production',
-      sameSite: 'strict',
-    });
+    console.log('Logout request:', req.user);
 
-    // DB에서 refresh token 제거
-    return this.authService.logout(req.user.id);
+    if (!req.user || !req.user.id) {
+      throw new UnauthorizedException('인증 정보가 없습니다.');
+    }
+
+    try {
+      res.clearCookie('refresh_token', {
+        httpOnly: true,
+        secure: process.env.NODE_ENV === 'production',
+        sameSite: 'strict',
+        path: '/',
+      });
+
+      const result = await this.authService.logout(req.user.id);
+      return result;
+    } catch (error) {
+      console.error('Logout controller error:', error);
+      throw error;
+    }
   }
 
   @ApiOperation({

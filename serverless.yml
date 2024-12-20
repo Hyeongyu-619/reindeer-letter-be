@@ -17,17 +17,16 @@ provider:
     minimumCompressionSize: 1024
 
 package:
-  exclude:
-    - node_modules/.prisma/client/libquery_engine-*
-    - node_modules/@prisma/engines/**
-    - node_modules/prisma/**
-    - tests/**
-    - coverage/**
-    - .git/**
-    - .vscode/**
-    - dev.json
-    - '**/*.spec.ts' # TypeScript 테스트 파일 제외
-    - '**/*.test.ts' # TypeScript 테스트 파일 제외
+  patterns:
+    - '!node_modules/.prisma/client/libquery_engine-*'
+    - 'node_modules/.prisma/client/libquery_engine-rhel-*'
+    - '!node_modules/@prisma/engines/**'
+    - '!node_modules/prisma/**'
+    - '!tests/**'
+    - '!coverage/**'
+    - '!.git/**'
+    - '!.vscode/**'
+    - 'dev.json'
 
 custom:
   typescript:

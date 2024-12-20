@@ -134,17 +134,27 @@ export class AuthService {
   }
 
   async logout(userId: number) {
-    // DB에서 refresh token 제거
-    await this.prisma.user.update({
-      where: { id: userId },
-      data: {
-        refreshToken: null,
-      },
-    });
+    if (!userId) {
+      throw new UnauthorizedException('유효하지 않은 사용자입니다.');
+    }
 
-    return {
-      message: '로그아웃 되었습니다.',
-    };
+    try {
+      await this.prisma.user.update({
+        where: {
+          id: userId,
+        },
+        data: {
+          refreshToken: null,
+        },
+      });
+
+      return {
+        message: '로그아웃 되었습니다.',
+      };
+    } catch (error) {
+      console.error('Logout error:', error);
+      throw new UnauthorizedException('로그아웃 처리 중 오류가 발생했습니다.');
+    }
   }
 
   async register(
@@ -169,7 +179,7 @@ export class AuthService {
       where: { email },
     });
     if (existingEmail) {
-      throw new ConflictException('이미 사��� 중인 이메일입니다.');
+      throw new ConflictException('이미 사용 중인 이메일입니다.');
     }
 
     // 닉네임 중복 체크
