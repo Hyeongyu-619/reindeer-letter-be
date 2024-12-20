@@ -277,7 +277,7 @@ export class LettersService {
         })
         .then((letter) => {
           if (!letter) {
-            throw new NotFoundException('임시저장 편지를 ��을 수 없습니다.');
+            throw new NotFoundException('임시저장 편지를 찾을 수 없습니다.');
           }
           return this.prisma.letter.update({
             where: { id: draftId },
@@ -327,7 +327,7 @@ export class LettersService {
     });
 
     if (!draft) {
-      throw new NotFoundException('임시저장된 편지를 찾을 수 없습니다.');
+      throw new NotFoundException('임시저장된 편지를 찾��� 수 없습니다.');
     }
 
     return draft;
@@ -438,5 +438,56 @@ export class LettersService {
         totalPages: Math.ceil(total / limit),
       },
     };
+  }
+
+  async updateDraft(
+    draftId: number,
+    draftData: SaveDraftLetterDto,
+    userId: number,
+  ) {
+    const draft = await this.prisma.letter.findFirst({
+      where: {
+        id: draftId,
+        senderId: userId,
+        isDraft: true,
+      },
+    });
+
+    if (!draft) {
+      throw new NotFoundException('임시저장된 편지를 찾을 수 없습니다.');
+    }
+
+    return this.prisma.letter.update({
+      where: { id: draftId },
+      data: {
+        title: draftData.title || draft.title,
+        description: draftData.description || draft.description,
+        imageUrl: draftData.imageUrl || draft.imageUrl,
+        bgmUrl: draftData.bgmUrl || draft.bgmUrl,
+        category: draftData.category || draft.category,
+        senderNickname: draftData.senderNickName || draft.senderNickname,
+        receiverId: draftData.receiverId || draft.receiverId,
+        draftData: draftData as any,
+        updatedAt: new Date(),
+      },
+    });
+  }
+
+  async deleteDraft(draftId: number, userId: number) {
+    const draft = await this.prisma.letter.findFirst({
+      where: {
+        id: draftId,
+        senderId: userId,
+        isDraft: true,
+      },
+    });
+
+    if (!draft) {
+      throw new NotFoundException('임시저장된 편지를 찾을 수 없습니다.');
+    }
+
+    return this.prisma.letter.delete({
+      where: { id: draftId },
+    });
   }
 }

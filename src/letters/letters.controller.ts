@@ -14,6 +14,8 @@ import {
   Query,
   BadRequestException,
   UnauthorizedException,
+  Put,
+  Delete,
 } from '@nestjs/common';
 import { LettersService } from './letters.service';
 import { CreateLetterDto } from './dto/create-letter.dto';
@@ -253,7 +255,7 @@ export class LettersController {
 
   @ApiOperation({
     summary: '내가 나에게 쓴 편지 목록 조회 API',
-    description: '자신이 자신에게 쓴 편지 목록을 페이지네이션하여 조회합니다.',
+    description: '자신이 자신에게 쓴 편지 목록을 페이지네이���하여 조회합니다.',
   })
   @ApiBearerAuth('access-token')
   @UseGuards(JwtAuthGuard)
@@ -301,7 +303,7 @@ export class LettersController {
 
   @ApiOperation({
     summary: '임시저장 편지 목록 조회 API',
-    description: '임시저장된 편지 목록을 조회합니다.',
+    description: '임시저장된 편지 ���록을 조회합니다.',
   })
   @Get('drafts')
   @UseGuards(JwtAuthGuard)
@@ -348,5 +350,31 @@ export class LettersController {
       page,
       limit,
     });
+  }
+
+  @ApiOperation({
+    summary: '임시저장 편지 수정 API',
+    description: '임시저장된 편지를 수정합니다.',
+  })
+  @Put('draft/:id')
+  @UseGuards(JwtAuthGuard)
+  @ApiBearerAuth('access-token')
+  async updateDraft(
+    @Param('id') id: string,
+    @Body() draftData: SaveDraftLetterDto,
+    @Request() req: RequestWithUser,
+  ) {
+    return this.lettersService.updateDraft(+id, draftData, req.user.id);
+  }
+
+  @ApiOperation({
+    summary: '임시저장 편지 삭제 API',
+    description: '임시저장된 편지를 삭제합니다.',
+  })
+  @Delete('draft/:id')
+  @UseGuards(JwtAuthGuard)
+  @ApiBearerAuth('access-token')
+  async deleteDraft(@Param('id') id: string, @Request() req: RequestWithUser) {
+    return this.lettersService.deleteDraft(+id, req.user.id);
   }
 }
