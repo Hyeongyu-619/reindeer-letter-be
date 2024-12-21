@@ -12,10 +12,22 @@ async function bootstrap() {
 
     // CORS 설정
     app.enableCors({
-      origin: '*',
-      methods: 'GET,HEAD,PUT,PATCH,POST,DELETE,OPTIONS',
-      allowedHeaders: 'Content-Type, Accept, Authorization',
-      credentials: false,
+      origin: [
+        'https://reindeer-letter.site',
+        'http://localhost:3000',
+        'https://www.reindeer-letter.site',
+      ],
+      methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
+      allowedHeaders: [
+        'Content-Type',
+        'Accept',
+        'Authorization',
+        'X-Requested-With',
+        'Origin',
+      ],
+      exposedHeaders: ['Authorization'],
+      credentials: true,
+      maxAge: 3600,
     });
 
     app.useGlobalPipes(new ValidationPipe());
