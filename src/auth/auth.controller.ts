@@ -36,7 +36,16 @@ import { KakaoAuthGuard } from './guards/kakao-auth.guard';
 import { GoogleAuthGuard } from './guards/google-auth.guard';
 
 interface RequestWithUser extends Request {
-  user: Omit<User, 'password'>;
+  user: {
+    id: number;
+    email: string;
+    isNewUser?: boolean;
+    userData?: {
+      googleId: string;
+      email: string;
+      nickname: string;
+    };
+  } & Partial<Omit<User, 'password'>>;
 }
 
 @ApiTags('Auth')
@@ -408,7 +417,12 @@ export class AuthController {
     @Request() req: RequestWithUser,
     @Res({ passthrough: true }) res: Response,
   ) {
-    return this.authService.login(req.user, res);
+    const { user } = req;
+    if (!user) {
+      throw new UnauthorizedException('구글 인증에 실패했습니다.');
+    }
+
+    return this.authService.login(user, res);
   }
 
   @Post('google/register')

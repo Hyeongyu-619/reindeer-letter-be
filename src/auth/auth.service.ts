@@ -38,6 +38,17 @@ interface GoogleUserDto {
   nickname: string;
 }
 
+interface GoogleUser {
+  id: number;
+  email: string;
+  isNewUser?: boolean;
+  userData?: {
+    googleId: string;
+    email: string;
+    nickname: string;
+  };
+}
+
 @Injectable()
 export class AuthService {
   constructor(
@@ -77,9 +88,16 @@ export class AuthService {
     return null;
   }
 
-  async login(user: Omit<User, 'password'>, response: Response) {
-    const payload = { sub: user.id, email: user.email };
+  async login(user: GoogleUser | Omit<User, 'password'>, response: Response) {
+    // 새로운 사용자인 경우 처리
+    if ('isNewUser' in user && user.isNewUser) {
+      return {
+        isNewUser: true,
+        userData: user.userData,
+      };
+    }
 
+    const payload = { sub: user.id, email: user.email };
     const accessToken = this.jwtService.sign(payload, { expiresIn: '1h' });
     const refreshToken = this.jwtService.sign(payload, { expiresIn: '7d' });
 
@@ -100,10 +118,11 @@ export class AuthService {
       user: {
         id: user.id,
         email: user.email,
-        nickName: user.nickName,
-        profileImageUrl: user.profileImageUrl,
-        createdAt: user.createdAt,
-        updatedAt: user.updatedAt,
+        nickName: 'nickName' in user ? user.nickName : undefined,
+        profileImageUrl:
+          'profileImageUrl' in user ? user.profileImageUrl : undefined,
+        createdAt: 'createdAt' in user ? user.createdAt : undefined,
+        updatedAt: 'updatedAt' in user ? user.updatedAt : undefined,
         refreshToken: refreshToken,
       },
     };
