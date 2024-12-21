@@ -409,27 +409,27 @@ export class AuthController {
 
   @Get('google/callback')
   @UseGuards(GoogleAuthGuard)
-  @ApiOperation({
-    summary: '구글 로그인 콜백 API',
-    description: '구글 OAuth 인증 후 처리를 담당합니다.',
-  })
   async googleLoginCallback(
     @Request() req: RequestWithUser,
-    @Res({ passthrough: true }) res: Response,
+    @Res() res: Response,
   ) {
     const { user } = req;
     if (!user) {
-      throw new UnauthorizedException('구글 인증에 실패했습니다.');
+      return res.redirect(
+        `${process.env.FRONTEND_URL}/login?error=auth_failed`,
+      );
     }
 
     if ('isNewUser' in user && user.isNewUser) {
-      return {
-        isNewUser: true,
-        userData: user.userData,
-      };
+      return res.redirect(
+        `${process.env.FRONTEND_URL}/profile?userData=${encodeURIComponent(
+          JSON.stringify(user.userData),
+        )}`,
+      );
     }
 
-    return this.authService.login(user, res);
+    const result = await this.authService.login(user, res);
+    return res.redirect(`${process.env.FRONTEND_URL}/home`);
   }
 
   @Post('google/register')
