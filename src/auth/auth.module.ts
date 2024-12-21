@@ -15,7 +15,7 @@ import { GoogleStrategy } from './strategies/google.strategy';
     UsersModule,
     EmailModule,
     JwtModule.register({
-      secret: devConfig.JWT_SECRET,
+      secret: process.env.JWT_SECRET || devConfig.JWT_SECRET,
       signOptions: { expiresIn: '1h' },
     }),
   ],

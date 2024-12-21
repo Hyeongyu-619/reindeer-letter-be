@@ -58,34 +58,39 @@ export class AuthService {
   ) {}
 
   async validateUser(email: string, password: string): Promise<any> {
-    console.log('Login attempt:', { email }); // 로그인 시도 기록
+    try {
+      console.log('Login attempt:', { email });
 
-    const user = await this.prisma.user.findUnique({
-      where: { email },
-      select: {
-        id: true,
-        email: true,
-        password: true,
-        nickName: true,
-        profileImageUrl: true,
-        createdAt: true,
-        updatedAt: true,
-        refreshToken: true,
-      },
-    });
+      const user = await this.prisma.user.findUnique({
+        where: { email },
+        select: {
+          id: true,
+          email: true,
+          password: true,
+          nickName: true,
+          profileImageUrl: true,
+          createdAt: true,
+          updatedAt: true,
+          refreshToken: true,
+        },
+      });
 
-    console.log('User found:', !!user); // 사용자 찾았는지 확인
+      console.log('User found:', !!user);
 
-    if (user) {
-      const isPasswordValid = await bcrypt.compare(password, user.password);
-      console.log('Password valid:', isPasswordValid); // 비밀번호 일치 여부 확인
+      if (user && user.password) {
+        const isPasswordValid = await bcrypt.compare(password, user.password);
+        console.log('Password valid:', isPasswordValid);
 
-      if (isPasswordValid) {
-        const { password: _, ...result } = user;
-        return result;
+        if (isPasswordValid) {
+          const { password: _, ...result } = user;
+          return result;
+        }
       }
+      return null;
+    } catch (error) {
+      console.error('validateUser error:', error);
+      throw error;
     }
-    return null;
   }
 
   async login(user: GoogleUser | Omit<User, 'password'>, response: Response) {
@@ -137,7 +142,7 @@ export class AuthService {
       });
 
       if (!user || user.refreshToken !== refreshToken) {
-        throw new UnauthorizedException('유효하지 않은 리프레시 토큰입니다.');
+        throw new UnauthorizedException('유���하지 않은 리프레시 토큰입니다.');
       }
 
       // 새로운 토큰 발급
