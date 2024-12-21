@@ -7,7 +7,7 @@
   "license": "UNLICENSED",
   "scripts": {
     "prebuild": "npx prisma generate",
-    "build": "nest build && npm prune --production",
+    "build": "NODE_ENV=production nest build && npm prune --production --no-audit --no-fund",
     "format": "prettier --write \"src/**/*.ts\" \"test/**/*.ts\"",
     "start": "nest start",
     "start:dev": "nest start --watch",
