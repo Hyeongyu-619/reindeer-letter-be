@@ -12,16 +12,19 @@ export class KakaoStrategy extends PassportStrategy(Strategy) {
       clientSecret: devConfig.KAKAO_CLIENT_SECRET,
       callbackURL: devConfig.KAKAO_CALLBACK_URL,
       scope: ['account_email'],
+      passReqToCallback: true,
     });
   }
 
   async validate(
+    req: any,
     accessToken: string,
     refreshToken: string,
     profile: any,
   ): Promise<any> {
     const { id, username, _json } = profile;
     const email = _json?.kakao_account?.email;
+    const code = req.query.code;
 
     if (!email) {
       throw new Error('이메일 제공에 동의해주세요.');
@@ -31,6 +34,7 @@ export class KakaoStrategy extends PassportStrategy(Strategy) {
       kakaoId: id,
       email,
       nickname: username || `사용자${id}`,
+      code,
     });
 
     return user;

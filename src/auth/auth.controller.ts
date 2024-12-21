@@ -391,10 +391,40 @@ export class AuthController {
     @Request() req: RequestWithUser,
     @Res({ passthrough: true }) res: Response,
   ) {
-    if (!req.user) {
+    const { user } = req;
+    if (!user) {
       throw new UnauthorizedException('카카오 인증에 실패했습니다.');
     }
-    return this.authService.login(req.user, res);
+
+    if ('isNewUser' in user && user.isNewUser) {
+      return {
+        isNewUser: true,
+        userData: user.userData,
+      };
+    }
+
+    return this.authService.login(user, res);
+  }
+
+  @Post('kakao/register')
+  async registerKakaoUser(
+    @Body()
+    registerDto: {
+      kakaoId: string;
+      email: string;
+      additionalData: {
+        nickname: string;
+        skinColor: ReindeerSkin;
+        antlerType: AntlerType;
+        mufflerColor: MufflerColor;
+      };
+    },
+  ) {
+    return this.authService.registerKakaoUser(
+      registerDto.kakaoId,
+      registerDto.email,
+      registerDto.additionalData,
+    );
   }
 
   @Get('google')

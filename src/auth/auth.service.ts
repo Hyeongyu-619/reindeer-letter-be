@@ -362,10 +362,16 @@ export class AuthService {
     return { imageUrl };
   }
 
-  async findOrCreateKakaoUser(kakaoUserDto: KakaoUserDto) {
-    const { kakaoId, email, nickname } = kakaoUserDto;
+  async findOrCreateKakaoUser(kakaoUserDto: {
+    kakaoId: string;
+    email: string;
+    nickname: string;
+    code: string;
+  }) {
+    const { kakaoId, email, nickname, code } = kakaoUserDto;
+    console.log('Processing Kakao user with code:', code);
 
-    // 기존 유저 찾기
+    // 기존 사용자 찾기
     const existingUser = await this.prisma.user.findFirst({
       where: {
         OR: [{ kakaoId }, { email }],
@@ -373,7 +379,7 @@ export class AuthService {
     });
 
     if (existingUser) {
-      // 기존 유저는 바로 로그인 처리
+      // 기존 사용자
       const tokens = await this.generateToken(existingUser);
       return {
         isNewUser: false,
@@ -382,13 +388,14 @@ export class AuthService {
       };
     }
 
-    // 새로운 유저는 추가 정보 입력이 필요
+    // 새로운 사용자
     return {
       isNewUser: true,
       userData: {
         kakaoId,
         email,
         nickname,
+        code,
       },
     };
   }
