@@ -34,6 +34,7 @@ import {
 } from '../constants/reindeer-images';
 import { KakaoAuthGuard } from './guards/kakao-auth.guard';
 import { GoogleAuthGuard } from './guards/google-auth.guard';
+import * as devConfig from '../../dev.json';
 
 interface RequestWithUser extends Request {
   user: {
@@ -441,21 +442,35 @@ export class AuthController {
   @UseGuards(GoogleAuthGuard)
   async googleLoginCallback(
     @Request() req: RequestWithUser,
-    @Res({ passthrough: true }) res: Response,
+    @Res() res: Response,
   ) {
-    const { user } = req;
-    if (!user) {
-      throw new UnauthorizedException('구글 인증에 실패했습니다.');
-    }
+    try {
+      const { user } = req;
+      console.log('Received user data:', user);
 
-    if ('isNewUser' in user && user.isNewUser) {
-      return {
-        isNewUser: true,
-        userData: user.userData,
-      };
-    }
+      if (!user) {
+        throw new UnauthorizedException('구글 인증에 실패했습니다.');
+      }
 
-    return this.authService.login(user, res);
+      if ('isNewUser' in user && user.isNewUser) {
+        const params = new URLSearchParams({
+          isNewUser: 'true',
+          ...user.userData,
+        });
+        return res.redirect(
+          `${devConfig.FRONTEND_URL}/auth/register?${params}`,
+        );
+      }
+
+      const loginResult = await this.authService.login(user, res);
+      const params = new URLSearchParams({
+        access_token: loginResult.access_token,
+      });
+      return res.redirect(`${devConfig.FRONTEND_URL}/auth/success?${params}`);
+    } catch (error) {
+      console.error('Google callback error:', error);
+      return res.redirect(`${devConfig.FRONTEND_URL}/auth/error`);
+    }
   }
 
   @Post('google/register')
