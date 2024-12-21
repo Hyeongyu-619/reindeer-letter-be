@@ -9,7 +9,7 @@ async function bootstrap() {
 
   app.use(cookieParser());
   app.enableCors({
-    origin: 'https://reindeer-letter.site',
+    origin: ['https://reindeer-letter.site', 'http://localhost:3000'],
     credentials: true,
   });
 
