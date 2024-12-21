@@ -411,25 +411,21 @@ export class AuthController {
   @UseGuards(GoogleAuthGuard)
   async googleLoginCallback(
     @Request() req: RequestWithUser,
-    @Res() res: Response,
+    @Res({ passthrough: true }) res: Response,
   ) {
     const { user } = req;
     if (!user) {
-      return res.redirect(
-        `${process.env.FRONTEND_URL}/login?error=auth_failed`,
-      );
+      throw new UnauthorizedException('구글 인증에 실패했습니다.');
     }
 
     if ('isNewUser' in user && user.isNewUser) {
-      return res.redirect(
-        `${process.env.FRONTEND_URL}/profile?userData=${encodeURIComponent(
-          JSON.stringify(user.userData),
-        )}`,
-      );
+      return {
+        isNewUser: true,
+        userData: user.userData,
+      };
     }
 
-    const result = await this.authService.login(user, res);
-    return res.redirect(`${process.env.FRONTEND_URL}/home`);
+    return this.authService.login(user, res);
   }
 
   @Post('google/register')
