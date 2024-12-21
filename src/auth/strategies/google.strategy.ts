@@ -12,17 +12,25 @@ export class GoogleStrategy extends PassportStrategy(Strategy) {
       clientSecret: devConfig.GOOGLE_CLIENT_SECRET,
       callbackURL: devConfig.GOOGLE_CALLBACK_URL,
       scope: ['email', 'profile'],
+      passReqToCallback: true,
     });
   }
 
-  async validate(accessToken: string, refreshToken: string, profile: any) {
+  async validate(
+    req: any,
+    accessToken: string,
+    refreshToken: string,
+    profile: any,
+  ) {
     const { id, emails, displayName } = profile;
     const email = emails[0].value;
+    const code = req.query.code;
 
     const user = await this.authService.findOrCreateGoogleUser({
       googleId: id,
       email,
       nickname: displayName || `사용자${id}`,
+      code,
     });
 
     return user;

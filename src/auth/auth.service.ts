@@ -453,8 +453,14 @@ export class AuthService {
     };
   }
 
-  async findOrCreateGoogleUser(googleUserDto: GoogleUserDto) {
-    const { googleId, email, nickname } = googleUserDto;
+  async findOrCreateGoogleUser(googleUserDto: {
+    googleId: string;
+    email: string;
+    nickname: string;
+    code: string;
+  }) {
+    const { googleId, email, nickname, code } = googleUserDto;
+    console.log('Processing Google user with code:', code);
 
     // 기존 사용자 찾기
     const existingUser = await this.prisma.user.findFirst({
@@ -464,20 +470,23 @@ export class AuthService {
     });
 
     if (existingUser) {
-      // 기존 사용자는 바로 로그인
+      // 기존 사용자
+      const tokens = await this.generateToken(existingUser);
       return {
         isNewUser: false,
         user: existingUser,
+        ...tokens,
       };
     }
 
-    // 새로운 사용자는 추가 정보 입력 필요
+    // 새로운 사용자
     return {
       isNewUser: true,
       userData: {
         googleId,
         email,
         nickname,
+        code,
       },
     };
   }
