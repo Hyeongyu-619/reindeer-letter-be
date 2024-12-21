@@ -142,7 +142,7 @@ export class AuthService {
       });
 
       if (!user || user.refreshToken !== refreshToken) {
-        throw new UnauthorizedException('유���하지 않은 리프레시 토큰입니다.');
+        throw new UnauthorizedException('유효하지 않은 리프레시 토큰입니다.');
       }
 
       // 새로운 토큰 발급
@@ -456,6 +456,7 @@ export class AuthService {
   async findOrCreateGoogleUser(googleUserDto: GoogleUserDto) {
     const { googleId, email, nickname } = googleUserDto;
 
+    // 기존 사용자 찾기
     const existingUser = await this.prisma.user.findFirst({
       where: {
         OR: [{ googleId }, { email }],
@@ -463,14 +464,14 @@ export class AuthService {
     });
 
     if (existingUser) {
-      const tokens = await this.generateToken(existingUser);
+      // 기존 사용자는 바로 로그인
       return {
         isNewUser: false,
         user: existingUser,
-        ...tokens,
       };
     }
 
+    // 새로운 사용자는 추가 정보 입력 필요
     return {
       isNewUser: true,
       userData: {
@@ -502,7 +503,7 @@ export class AuthService {
         email,
         googleId,
         nickName: additionalData.nickname,
-        password: '',
+        password: '', // 소셜 로그인은 빈 문자열로 설정
         profileImageUrl,
       },
       select: {
@@ -517,10 +518,6 @@ export class AuthService {
       },
     });
 
-    const tokens = await this.generateToken(user);
-    return {
-      user,
-      ...tokens,
-    };
+    return user;
   }
 }

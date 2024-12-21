@@ -422,6 +422,15 @@ export class AuthController {
       throw new UnauthorizedException('구글 인증에 실패했습니다.');
     }
 
+    // 새로운 사용자인 경우
+    if ('isNewUser' in user && user.isNewUser) {
+      return {
+        isNewUser: true,
+        userData: user.userData,
+      };
+    }
+
+    // 기존 사용자인 경우
     return this.authService.login(user, res);
   }
 
