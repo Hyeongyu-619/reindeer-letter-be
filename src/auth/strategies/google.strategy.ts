@@ -22,7 +22,13 @@ export class GoogleStrategy extends PassportStrategy(Strategy) {
     refreshToken: string,
     profile: any,
   ) {
+    console.log('Google Strategy Validate - Request:', {
+      query: req.query,
+      headers: req.headers,
+      url: req.url,
+    });
     console.log('Google Strategy Validate - Profile:', profile);
+
     const { id, emails, displayName } = profile;
     const email = emails[0].value;
     const code = req.query.code;
