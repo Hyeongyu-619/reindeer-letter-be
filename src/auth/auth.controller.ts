@@ -446,30 +446,26 @@ export class AuthController {
   ) {
     try {
       const { user } = req;
-      console.log('Received user data:', user);
 
       if (!user) {
         throw new UnauthorizedException('구글 인증에 실패했습니다.');
       }
 
       if ('isNewUser' in user && user.isNewUser) {
-        const params = new URLSearchParams({
-          isNewUser: 'true',
-          ...user.userData,
-        });
         return res.redirect(
-          `${devConfig.FRONTEND_URL}/auth/register?${params}`,
+          `${process.env.FRONTEND_URL}/profile?userData=${encodeURIComponent(
+            JSON.stringify(user.userData),
+          )}`,
         );
       }
 
       const loginResult = await this.authService.login(user, res);
-      const params = new URLSearchParams({
-        access_token: loginResult.access_token,
-      });
-      return res.redirect(`${devConfig.FRONTEND_URL}/auth/success?${params}`);
+      return res.redirect(
+        `${process.env.FRONTEND_URL}/home?token=${loginResult.access_token}`,
+      );
     } catch (error) {
       console.error('Google callback error:', error);
-      return res.redirect(`${devConfig.FRONTEND_URL}/login?error=auth`);
+      return res.redirect(`${process.env.FRONTEND_URL}/login?error=auth`);
     }
   }
 
