@@ -455,23 +455,25 @@ export class AuthController {
 
       const result = await this.authService.login(user, res);
 
-      res.header('Access-Control-Allow-Origin', devConfig.FRONTEND_URL);
+      // CORS 헤더 수정
+      res.header('Access-Control-Allow-Origin', 'http://localhost:3000');
       res.header('Access-Control-Allow-Credentials', 'true');
 
       if ('isNewUser' in result && result.isNewUser) {
+        const userData = encodeURIComponent(JSON.stringify(result.userData));
         return res.redirect(
-          `${devConfig.FRONTEND_URL}/profile?userData=${JSON.stringify(
-            result.userData,
-          )}`,
+          `http://localhost:3000/profile?userData=${userData}`,
         );
       }
 
       return res.redirect(
-        `${devConfig.FRONTEND_URL}/home?token=${result.access_token}&userId=${user.id}&nickName=${user.nickName}`,
+        `http://localhost:3000/home?token=${result.access_token}&userId=${
+          result.user.id
+        }&nickName=${encodeURIComponent(result.user.nickName)}`,
       );
     } catch (error) {
       console.error('Google callback error:', error);
-      return res.redirect(`${devConfig.FRONTEND_URL}/login?error=auth`);
+      return res.redirect('http://localhost:3000/login?error=auth');
     }
   }
 

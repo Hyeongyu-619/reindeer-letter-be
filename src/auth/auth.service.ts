@@ -93,43 +93,31 @@ export class AuthService {
     }
   }
 
-  async login(user: GoogleUser | Omit<User, 'password'>, response: Response) {
-    if ('isNewUser' in user && user.isNewUser) {
+  async login(user: any, res: Response) {
+    try {
+      if (user.isNewUser) {
+        return user; // 새 사용자면 그대로 반환
+      }
+
+      const payload = { sub: user.user.id, email: user.user.email };
+      const accessToken = this.jwtService.sign(payload, { expiresIn: '1h' });
+      const refreshToken = this.jwtService.sign(payload, { expiresIn: '7d' });
+
+      // user.user.id를 사용하여 업데이트
+      await this.prisma.user.update({
+        where: { id: user.user.id }, // 여기를 수정
+        data: { refreshToken },
+      });
+
       return {
-        isNewUser: true,
-        userData: user.userData,
+        access_token: accessToken,
+        refresh_token: refreshToken,
+        user: user.user,
       };
+    } catch (error) {
+      console.error('Login error:', error);
+      throw new UnauthorizedException('로그인 처리 중 오류가 발생했습니다.');
     }
-
-    const payload = { sub: user.id, email: user.email };
-    const accessToken = this.jwtService.sign(payload, { expiresIn: '1h' });
-    const refreshToken = this.jwtService.sign(payload, { expiresIn: '7d' });
-
-    await this.prisma.user.update({
-      where: { id: user.id },
-      data: { refreshToken },
-    });
-
-    response.cookie('refresh_token', refreshToken, {
-      httpOnly: true,
-      secure: process.env.NODE_ENV === 'production',
-      sameSite: 'strict',
-      maxAge: 7 * 24 * 60 * 60 * 1000,
-    });
-
-    return {
-      access_token: accessToken,
-      user: {
-        id: user.id,
-        email: user.email,
-        nickName: 'nickName' in user ? user.nickName : undefined,
-        profileImageUrl:
-          'profileImageUrl' in user ? user.profileImageUrl : undefined,
-        createdAt: 'createdAt' in user ? user.createdAt : undefined,
-        updatedAt: 'updatedAt' in user ? user.updatedAt : undefined,
-        refreshToken: refreshToken,
-      },
-    };
   }
 
   async refreshTokens(refreshToken: string) {
@@ -225,7 +213,7 @@ export class AuthService {
       throw new ConflictException('이미 사용 중인 닉네임입니다.');
     }
 
-    // 비밀번호 해시화 및 사용자 생성
+    // 비밀번호 해시화 및 ��용자 생성
     const hashedPassword = await bcrypt.hash(password, 10);
     const profileImageUrl = getReindeerImageUrl({
       skinColor,
