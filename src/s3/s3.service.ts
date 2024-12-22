@@ -55,7 +55,7 @@ export class S3Service {
         },
         audio: {
           maxSize: 10 * 1024 * 1024, // 10MB
-          allowedTypes: /(mp3|wav|m4a)$/,
+          allowedTypes: /(audio\/wav|audio\/mpeg|audio\/mp4|audio\/x-m4a)$/,
           folder: 'voices',
         },
       };

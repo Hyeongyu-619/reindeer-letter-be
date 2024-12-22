@@ -484,11 +484,26 @@ export class AuthController {
         mufflerColor: MufflerColor;
       };
     },
+    @Res({ passthrough: true }) res: Response,
   ) {
-    return this.authService.registerGoogleUser(
+    const result = await this.authService.registerGoogleUser(
       registerDto.googleId,
       registerDto.email,
       registerDto.additionalData,
     );
+
+    // 쿠키에 리프레시 토큰 설정
+    res.cookie('refresh_token', result.refresh_token, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: 'strict',
+      maxAge: 7 * 24 * 60 * 60 * 1000,
+    });
+
+    // 액세스 토큰과 사용자 정보 반환
+    return {
+      access_token: result.access_token,
+      user: result.user,
+    };
   }
 }
