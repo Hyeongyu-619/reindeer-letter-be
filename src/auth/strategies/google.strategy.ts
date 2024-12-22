@@ -26,6 +26,8 @@ export class GoogleStrategy extends PassportStrategy(Strategy) {
     const email = emails[0].value;
     const code = req.query.code;
 
+    console.log('Google profile:', { id, email, displayName, code });
+
     const user = await this.authService.findOrCreateGoogleUser({
       googleId: id,
       email,

@@ -447,6 +447,7 @@ export class AuthController {
   ) {
     try {
       const { user } = req;
+      console.log('Callback received user:', user);
 
       if (!user) {
         throw new UnauthorizedException('구글 인증에 실패했습니다.');
@@ -454,7 +455,7 @@ export class AuthController {
 
       const result = await this.authService.login(user, res);
 
-      res.header('Access-Control-Allow-Origin', 'http://localhost:3000');
+      res.header('Access-Control-Allow-Origin', devConfig.FRONTEND_URL);
       res.header('Access-Control-Allow-Credentials', 'true');
 
       if ('isNewUser' in result && result.isNewUser) {
