@@ -43,7 +43,8 @@ interface RequestWithUser extends Request {
     email: string;
     isNewUser?: boolean;
     userData?: {
-      googleId: string;
+      kakaoId?: string;
+      googleId?: string;
       email: string;
       nickname: string;
     };
@@ -111,7 +112,7 @@ export class AuthController {
   async login(
     @Request() req: RequestWithUser,
     @Res({ passthrough: true }) res: Response,
-  ) {
+  ): Promise<any> {
     if (!req.user) {
       throw new UnauthorizedException('사용자 인증에 실패했습니다.');
     }
@@ -444,7 +445,7 @@ export class AuthController {
   async googleLoginCallback(
     @Request() req: RequestWithUser,
     @Res() res: Response,
-  ) {
+  ): Promise<Record<string, any>> {
     try {
       const { user } = req;
       console.log('Callback received user:', user);
@@ -454,8 +455,6 @@ export class AuthController {
       }
 
       const result = await this.authService.login(user, res);
-
-      // 리다이렉트 대신 JSON 응답을 반환
       return res.status(200).json(result);
     } catch (error) {
       console.error('Google callback error:', error);

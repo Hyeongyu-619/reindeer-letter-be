@@ -38,15 +38,12 @@ interface GoogleUserDto {
   nickname: string;
 }
 
-interface GoogleUser {
-  id: number;
+interface SocialUserDto {
+  kakaoId?: string;
+  googleId?: string;
   email: string;
-  isNewUser?: boolean;
-  userData?: {
-    googleId: string;
-    email: string;
-    nickname: string;
-  };
+  nickname: string;
+  code?: string;
 }
 
 @Injectable()
@@ -93,16 +90,28 @@ export class AuthService {
     }
   }
 
-  async login(user: GoogleUser | Omit<User, 'password'>, response: Response) {
+  async login(
+    user:
+      | {
+          id: number;
+          email: string;
+          isNewUser?: boolean;
+          userData?: {
+            googleId?: string;
+            email: string;
+            nickname: string;
+          };
+        }
+      | Omit<User, 'password'>,
+    response: Response,
+  ) {
     try {
-      console.log('Login user data:', user); // 디버깅용
+      console.log('Login user data:', user);
 
-      // 소셜 로그인과 일반 로그인 모두 처리할 수 있도록 수정
       if ('isNewUser' in user && user.isNewUser) {
         return user;
       }
 
-      // user 객체 구조 통일
       const userId = user.id;
       const userEmail = user.email;
 
@@ -180,7 +189,7 @@ export class AuthService {
 
   async logout(userId: number) {
     if (!userId) {
-      throw new UnauthorizedException('유효하지 않은 사용자입니다.');
+      throw new UnauthorizedException('유효하지 않은 사용자��니다.');
     }
 
     try {
@@ -232,7 +241,7 @@ export class AuthService {
       where: { nickName },
     });
     if (existingNickname) {
-      throw new ConflictException('이미 사용 중인 닉네임입니다.');
+      throw new ConflictException('이미 사용 ���인 닉네임입니다.');
     }
 
     // 비밀번호 해시화 및 사용자 생성
@@ -371,13 +380,9 @@ export class AuthService {
     return { imageUrl };
   }
 
-  async findOrCreateKakaoUser(kakaoUserDto: {
-    kakaoId: string;
-    email: string;
-    nickname: string;
-  }) {
-    const { kakaoId, email, nickname, code } = kakaoUserDto;
-    console.log('Processing Kakao user with code:', code);
+  async findOrCreateKakaoUser(kakaoUserDto: SocialUserDto) {
+    const { kakaoId, email, nickname } = kakaoUserDto;
+    console.log('Processing Kakao user:', kakaoUserDto);
 
     // 기존 사용자 찾기
     const existingUser = await this.prisma.user.findFirst({
@@ -403,7 +408,6 @@ export class AuthService {
         kakaoId,
         email,
         nickname,
-        code,
       },
     };
   }
@@ -468,16 +472,20 @@ export class AuthService {
     };
   }
 
-  async findOrCreateGoogleUser(googleUserDto: {
-    googleId: string;
-    email: string;
-    nickname: string;
-    code: string;
-  }) {
-    const { googleId, email, nickname, code } = googleUserDto;
-    console.log('Processing Google user with code:', code);
+  async findOrCreateGoogleUser(googleUserDto: SocialUserDto): Promise<{
+    isNewUser: boolean;
+    user?: any;
+    access_token?: string;
+    refresh_token?: string;
+    userData?: {
+      googleId: string;
+      email: string;
+      nickname: string;
+    };
+  }> {
+    const { googleId, email, nickname } = googleUserDto;
+    console.log('Processing Google user:', googleUserDto);
 
-    // 기존 사용자 찾기
     const existingUser = await this.prisma.user.findFirst({
       where: {
         OR: [{ googleId }, { email }],
@@ -485,7 +493,6 @@ export class AuthService {
     });
 
     if (existingUser) {
-      // 기존 사용자
       const tokens = await this.generateToken(existingUser);
       return {
         isNewUser: false,
@@ -494,14 +501,12 @@ export class AuthService {
       };
     }
 
-    // 새로운 사용자
     return {
       isNewUser: true,
       userData: {
         googleId,
         email,
         nickname,
-        code,
       },
     };
   }
