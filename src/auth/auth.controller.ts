@@ -455,25 +455,11 @@ export class AuthController {
 
       const result = await this.authService.login(user, res);
 
-      // CORS 헤더 수정
-      res.header('Access-Control-Allow-Origin', 'http://localhost:3000');
-      res.header('Access-Control-Allow-Credentials', 'true');
-
-      if ('isNewUser' in result && result.isNewUser) {
-        const userData = encodeURIComponent(JSON.stringify(result.userData));
-        return res.redirect(
-          `http://localhost:3000/profile?userData=${userData}`,
-        );
-      }
-
-      return res.redirect(
-        `http://localhost:3000/home?token=${result.access_token}&userId=${
-          result.user.id
-        }&nickName=${encodeURIComponent(result.user.nickName)}`,
-      );
+      // 리다이렉트 대신 JSON 응답을 반환
+      return res.status(200).json(result);
     } catch (error) {
       console.error('Google callback error:', error);
-      return res.redirect('http://localhost:3000/login?error=auth');
+      return res.status(401).json({ error: 'Authentication failed' });
     }
   }
 
