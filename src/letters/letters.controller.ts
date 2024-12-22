@@ -71,7 +71,6 @@ export class LettersController {
     },
   })
   @Post()
-  @UseGuards(JwtAuthGuard)
   @ApiBearerAuth('access-token')
   create(
     @Body() createLetterDto: CreateLetterDto,
