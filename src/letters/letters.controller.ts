@@ -94,7 +94,7 @@ export class LettersController {
   @ApiQuery({
     name: 'limit',
     required: false,
-    description: '페이지당 항목 수 (기본값: 10)',
+    description: '페이지��� 항목 수 (기본값: 10)',
     type: Number,
   })
   @ApiQuery({
@@ -163,6 +163,13 @@ export class LettersController {
   @UseGuards(JwtAuthGuard)
   @Get(':id')
   findOne(@Param('id') id: string, @Request() req: RequestWithUser) {
+    console.log('Request Headers:', req.headers);
+    console.log('User Info in findOne:', req.user);
+
+    if (!req.user?.id) {
+      throw new UnauthorizedException('사용자 인증이 필요합니다.');
+    }
+
     return this.lettersService.findOne(+id, req.user.id);
   }
 
