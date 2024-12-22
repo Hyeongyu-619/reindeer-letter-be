@@ -457,6 +457,7 @@ export class AuthController {
           isNewUser: 'true',
           ...user.userData,
         });
+        res.setHeader('Access-Control-Allow-Origin', devConfig.FRONTEND_URL);
         return res.redirect(
           `${devConfig.FRONTEND_URL}/auth/register?${params}`,
         );
@@ -466,9 +467,11 @@ export class AuthController {
       const params = new URLSearchParams({
         access_token: loginResult.access_token,
       });
+      res.setHeader('Access-Control-Allow-Origin', devConfig.FRONTEND_URL);
       return res.redirect(`${devConfig.FRONTEND_URL}/auth/success?${params}`);
     } catch (error) {
       console.error('Google callback error:', error);
+      res.setHeader('Access-Control-Allow-Origin', devConfig.FRONTEND_URL);
       return res.redirect(`${devConfig.FRONTEND_URL}/auth/error`);
     }
   }
