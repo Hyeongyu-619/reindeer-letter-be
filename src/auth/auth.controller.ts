@@ -446,26 +446,29 @@ export class AuthController {
   ) {
     try {
       const { user } = req;
+      console.log('Google Callback - Received user:', user);
 
       if (!user) {
         throw new UnauthorizedException('구글 인증에 실패했습니다.');
       }
 
       if ('isNewUser' in user && user.isNewUser) {
-        return res.redirect(
-          `${process.env.FRONTEND_URL}/profile?userData=${encodeURIComponent(
-            JSON.stringify(user.userData),
-          )}`,
-        );
+        const redirectUrl = new URL('/profile', devConfig.FRONTEND_URL);
+        redirectUrl.searchParams.set('userData', JSON.stringify(user.userData));
+        console.log('Redirecting new user to:', redirectUrl.toString());
+        return res.redirect(redirectUrl.toString());
       }
 
       const loginResult = await this.authService.login(user, res);
-      return res.redirect(
-        `${process.env.FRONTEND_URL}/home?token=${loginResult.access_token}`,
-      );
+      const redirectUrl = new URL('/home', devConfig.FRONTEND_URL);
+      redirectUrl.searchParams.set('token', loginResult.access_token);
+      redirectUrl.searchParams.set('userId', user.id.toString());
+      redirectUrl.searchParams.set('nickName', user.nickName);
+      console.log('Redirecting existing user to:', redirectUrl.toString());
+      return res.redirect(redirectUrl.toString());
     } catch (error) {
       console.error('Google callback error:', error);
-      return res.redirect(`${process.env.FRONTEND_URL}/login?error=auth`);
+      return res.redirect(`${devConfig.FRONTEND_URL}/login?error=auth`);
     }
   }
 

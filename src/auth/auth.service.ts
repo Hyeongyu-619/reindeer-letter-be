@@ -94,7 +94,6 @@ export class AuthService {
   }
 
   async login(user: GoogleUser | Omit<User, 'password'>, response: Response) {
-    // 새로운 사용자인 경우 처리
     if ('isNewUser' in user && user.isNewUser) {
       return {
         isNewUser: true,

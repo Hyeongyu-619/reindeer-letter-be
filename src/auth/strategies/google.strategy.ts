@@ -22,6 +22,7 @@ export class GoogleStrategy extends PassportStrategy(Strategy) {
     refreshToken: string,
     profile: any,
   ) {
+    console.log('Google Strategy Validate - Profile:', profile);
     const { id, emails, displayName } = profile;
     const email = emails[0].value;
     const code = req.query.code;
@@ -33,6 +34,7 @@ export class GoogleStrategy extends PassportStrategy(Strategy) {
       code,
     });
 
+    console.log('Google Strategy Validate - Result:', user);
     return user;
   }
 }
