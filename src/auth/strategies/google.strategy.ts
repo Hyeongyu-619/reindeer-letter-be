@@ -24,17 +24,26 @@ export class GoogleStrategy extends PassportStrategy(Strategy) {
   ) {
     const { id, emails, displayName } = profile;
     const email = emails[0].value;
-    const code = req.query.code;
 
-    console.log('Google profile:', { id, email, displayName, code });
+    console.log('Google profile:', { id, email, displayName });
 
     const user = await this.authService.findOrCreateGoogleUser({
       googleId: id,
       email,
       nickname: displayName || `사용자${id}`,
-      code,
     });
 
-    return user;
+    console.log('Validated user:', user);
+
+    if (user.isNewUser) {
+      return user;
+    }
+
+    return {
+      id: user.user.id,
+      email: user.user.email,
+      nickName: user.user.nickName,
+      profileImageUrl: user.user.profileImageUrl,
+    };
   }
 }

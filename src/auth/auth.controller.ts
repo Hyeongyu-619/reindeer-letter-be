@@ -454,11 +454,20 @@ export class AuthController {
         throw new UnauthorizedException('구글 인증에 실패했습니다.');
       }
 
+      if ('isNewUser' in user && user.isNewUser) {
+        return res.status(200).json({
+          isNewUser: true,
+          userData: user.userData,
+        });
+      }
+
       const result = await this.authService.login(user, res);
       return res.status(200).json(result);
     } catch (error) {
       console.error('Google callback error:', error);
-      return res.status(401).json({ error: 'Authentication failed' });
+      return res
+        .status(401)
+        .json({ error: 'Authentication failed', details: error.message });
     }
   }
 
