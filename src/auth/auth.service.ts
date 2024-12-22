@@ -93,26 +93,48 @@ export class AuthService {
     }
   }
 
-  async login(user: any, res: Response) {
+  async login(user: GoogleUser | Omit<User, 'password'>, response: Response) {
     try {
-      if (user.isNewUser) {
-        return user; // 새 사용자면 그대로 반환
+      console.log('Login user data:', user); // 디버깅용
+
+      // 소셜 로그인과 일반 로그인 모두 처리할 수 있도록 수정
+      if ('isNewUser' in user && user.isNewUser) {
+        return user;
       }
 
-      const payload = { sub: user.user.id, email: user.user.email };
+      // user 객체 구조 통일
+      const userId = user.id;
+      const userEmail = user.email;
+
+      if (!userId || !userEmail) {
+        throw new UnauthorizedException('유효하지 않은 사용자 정보입니다.');
+      }
+
+      const payload = { sub: userId, email: userEmail };
       const accessToken = this.jwtService.sign(payload, { expiresIn: '1h' });
       const refreshToken = this.jwtService.sign(payload, { expiresIn: '7d' });
 
-      // user.user.id를 사용하여 업데이트
       await this.prisma.user.update({
-        where: { id: user.user.id }, // 여기를 수정
+        where: { id: userId },
         data: { refreshToken },
+      });
+
+      response.cookie('refresh_token', refreshToken, {
+        httpOnly: true,
+        secure: process.env.NODE_ENV === 'production',
+        sameSite: 'strict',
+        maxAge: 7 * 24 * 60 * 60 * 1000,
       });
 
       return {
         access_token: accessToken,
-        refresh_token: refreshToken,
-        user: user.user,
+        user: {
+          id: userId,
+          email: userEmail,
+          nickName: 'nickName' in user ? user.nickName : undefined,
+          profileImageUrl:
+            'profileImageUrl' in user ? user.profileImageUrl : undefined,
+        },
       };
     } catch (error) {
       console.error('Login error:', error);
@@ -353,7 +375,6 @@ export class AuthService {
     kakaoId: string;
     email: string;
     nickname: string;
-    code: string;
   }) {
     const { kakaoId, email, nickname, code } = kakaoUserDto;
     console.log('Processing Kakao user with code:', code);
@@ -506,7 +527,7 @@ export class AuthService {
         email,
         googleId,
         nickName: additionalData.nickname,
-        password: '', // 소셜 로그인은 빈 문자열로 설정
+        password: '',
         profileImageUrl,
       },
       select: {
@@ -521,6 +542,11 @@ export class AuthService {
       },
     });
 
-    return user;
+    // 토큰 생성 추가
+    const tokens = await this.generateToken(user);
+    return {
+      user,
+      ...tokens,
+    };
   }
 }
