@@ -5,6 +5,7 @@ import {
   IsBoolean,
   IsNumber,
   IsOptional,
+  IsArray,
 } from 'class-validator';
 import { Category } from '@prisma/client';
 
@@ -19,10 +20,11 @@ export class SaveDraftLetterDto {
   @IsOptional()
   description?: string;
 
-  @ApiProperty({ required: false })
-  @IsString()
+  @ApiProperty({ required: false, isArray: true })
+  @IsArray()
+  @IsString({ each: true })
   @IsOptional()
-  imageUrl?: string;
+  imageUrls?: string[];
 
   @ApiProperty({ required: false })
   @IsString()

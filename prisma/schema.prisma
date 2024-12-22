@@ -27,7 +27,7 @@ model Letter {
   id             Int       @id @default(autoincrement())
   title          String
   description    String
-  imageUrl       String?
+  imageUrls      String[]
   bgmUrl         String?
   category       Category
   isOpen         Boolean   @default(false)
@@ -41,7 +41,7 @@ model Letter {
   receiver       User      @relation("ReceivedLetters", fields: [receiverId], references: [id])
   sender         User?     @relation("SentLetters", fields: [senderId], references: [id])
   isDraft        Boolean   @default(false)
-  draftData      Json?     // JSON 타입으로 임시저장 데이터 저장
+  draftData      Json?
 }
 
 model EmailVerification {

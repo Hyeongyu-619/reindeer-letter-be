@@ -7,6 +7,7 @@ import {
   IsNumber,
   MaxLength,
   IsOptional,
+  IsArray,
 } from 'class-validator';
 import { Category } from '@prisma/client';
 
@@ -28,12 +29,17 @@ export class CreateLetterDto {
   description: string;
 
   @ApiProperty({
-    example: 'https://example.com/image.jpg',
-    description: '이미지 URL',
+    example: [
+      'https://example.com/image1.jpg',
+      'https://example.com/image2.jpg',
+    ],
+    description: '이미지 URL 배열',
+    isArray: true,
   })
-  @IsString()
+  @IsArray()
+  @IsString({ each: true })
   @IsOptional()
-  imageUrl: string;
+  imageUrls: string[];
 
   @ApiProperty({
     example: 'https://example.com/music.mp3',

@@ -20,8 +20,13 @@ export class LettersService {
   ) {}
 
   async create(createLetterDto: CreateLetterDto, userId?: number) {
-    const { receiverId, scheduledAt, senderNickName, ...letterData } =
-      createLetterDto;
+    const {
+      receiverId,
+      scheduledAt,
+      senderNickName,
+      imageUrls,
+      ...letterData
+    } = createLetterDto;
 
     let scheduledDate = null;
     let isDelivered = true;
@@ -40,6 +45,7 @@ export class LettersService {
     return this.prisma.letter.create({
       data: {
         ...letterData,
+        imageUrls: imageUrls || [],
         senderNickname: senderNickName,
         scheduledAt: scheduledDate,
         isDelivered,
@@ -115,7 +121,7 @@ export class LettersService {
           id: true,
           title: true,
           description: true,
-          imageUrl: true,
+          imageUrls: true,
           bgmUrl: true,
           category: true,
           isOpen: true,
@@ -177,7 +183,7 @@ export class LettersService {
           id: true,
           title: true,
           description: true,
-          imageUrl: true,
+          imageUrls: true,
           bgmUrl: true,
           category: true,
           isOpen: true,
@@ -293,7 +299,7 @@ export class LettersService {
       data: {
         title: draftData.title || '임시저장',
         description: draftData.description || '',
-        imageUrl: draftData.imageUrl || '',
+        imageUrls: draftData.imageUrls || [],
         bgmUrl: draftData.bgmUrl || '',
         category: draftData.category || 'TEXT',
         senderNickname: draftData.senderNickName || '익명',
@@ -350,7 +356,7 @@ export class LettersService {
           id: true,
           title: true,
           description: true,
-          imageUrl: true,
+          imageUrls: true,
           bgmUrl: true,
           category: true,
           draftData: true,
@@ -404,7 +410,7 @@ export class LettersService {
           id: true,
           title: true,
           description: true,
-          imageUrl: true,
+          imageUrls: true,
           bgmUrl: true,
           category: true,
           isOpen: true,
@@ -462,7 +468,7 @@ export class LettersService {
       data: {
         title: draftData.title || draft.title,
         description: draftData.description || draft.description,
-        imageUrl: draftData.imageUrl || draft.imageUrl,
+        imageUrls: draftData.imageUrls || draft.imageUrls,
         bgmUrl: draftData.bgmUrl || draft.bgmUrl,
         category: draftData.category || draft.category,
         senderNickname: draftData.senderNickName || draft.senderNickname,
