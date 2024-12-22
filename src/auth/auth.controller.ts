@@ -447,31 +447,27 @@ export class AuthController {
   ) {
     try {
       const { user } = req;
-      console.log('Google Callback - Received user:', user);
 
       if (!user) {
         throw new UnauthorizedException('구글 인증에 실패했습니다.');
       }
 
-      // login 메서드 호출 시 response 객체 전달
       const result = await this.authService.login(user, res);
 
+      res.header('Access-Control-Allow-Origin', 'http://localhost:3000');
+      res.header('Access-Control-Allow-Credentials', 'true');
+
       if ('isNewUser' in result && result.isNewUser) {
-        const redirectUrl = new URL('/profile', devConfig.FRONTEND_URL);
-        redirectUrl.searchParams.set(
-          'userData',
-          JSON.stringify(result.userData),
+        return res.redirect(
+          `${devConfig.FRONTEND_URL}/profile?userData=${JSON.stringify(
+            result.userData,
+          )}`,
         );
-        console.log('Redirecting new user to:', redirectUrl.toString());
-        return res.redirect(redirectUrl.toString());
       }
 
-      const redirectUrl = new URL('/home', devConfig.FRONTEND_URL);
-      redirectUrl.searchParams.set('token', result.access_token);
-      redirectUrl.searchParams.set('userId', user.id.toString());
-      redirectUrl.searchParams.set('nickName', user.nickName);
-      console.log('Redirecting existing user to:', redirectUrl.toString());
-      return res.redirect(redirectUrl.toString());
+      return res.redirect(
+        `${devConfig.FRONTEND_URL}/home?token=${result.access_token}&userId=${user.id}&nickName=${user.nickName}`,
+      );
     } catch (error) {
       console.error('Google callback error:', error);
       return res.redirect(`${devConfig.FRONTEND_URL}/login?error=auth`);
