@@ -213,7 +213,7 @@ export class AuthService {
       throw new ConflictException('이미 사용 중인 닉네임입니다.');
     }
 
-    // 비밀번호 해시화 및 ��용자 생성
+    // 비밀번호 해시화 및 사용자 생성
     const hashedPassword = await bcrypt.hash(password, 10);
     const profileImageUrl = getReindeerImageUrl({
       skinColor,

@@ -327,7 +327,7 @@ export class LettersService {
     });
 
     if (!draft) {
-      throw new NotFoundException('임시저장된 편지를 찾��� 수 없습니다.');
+      throw new NotFoundException('임시저장된 편지를 찾을 수 없습니다.');
     }
 
     return draft;
