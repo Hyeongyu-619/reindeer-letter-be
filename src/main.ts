@@ -9,8 +9,15 @@ async function bootstrap() {
 
   app.use(cookieParser());
   app.enableCors({
-    origin: ['https://reindeer-letter.site', 'http://localhost:3000'],
+    origin: [
+      'https://reindeer-letter.site',
+      'http://localhost:3000',
+      'https://ak1pxbtetk.execute-api.ap-northeast-2.amazonaws.com',
+    ],
     credentials: true,
+    methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
+    allowedHeaders: ['Content-Type', 'Authorization', 'Origin', 'Accept'],
+    exposedHeaders: ['Authorization'],
   });
 
   app.useGlobalPipes(
