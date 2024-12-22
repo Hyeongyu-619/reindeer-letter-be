@@ -5,42 +5,22 @@ import { AuthService } from '../auth.service';
 import * as devConfig from '../../../dev.json';
 
 @Injectable()
-export class GoogleStrategy extends PassportStrategy(Strategy) {
+export class GoogleStrategy extends PassportStrategy(Strategy, 'google') {
   constructor(private authService: AuthService) {
     super({
       clientID: devConfig.GOOGLE_CLIENT_ID,
       clientSecret: devConfig.GOOGLE_CLIENT_SECRET,
       callbackURL: devConfig.GOOGLE_CALLBACK_URL,
       scope: ['email', 'profile'],
-      passReqToCallback: true,
     });
   }
 
-  async validate(
-    req: any,
-    accessToken: string,
-    refreshToken: string,
-    profile: any,
-  ) {
-    console.log('Google Strategy Validate - Request:', {
-      query: req.query,
-      headers: req.headers,
-      url: req.url,
-    });
-    console.log('Google Strategy Validate - Profile:', profile);
-
-    const { id, emails, displayName } = profile;
-    const email = emails[0].value;
-    const code = req.query.code;
-
-    const user = await this.authService.findOrCreateGoogleUser({
-      googleId: id,
-      email,
-      nickname: displayName || `사용자${id}`,
-      code,
-    });
-
-    console.log('Google Strategy Validate - Result:', user);
-    return user;
+  async validate(accessToken: string, refreshToken: string, profile) {
+    const { name, emails } = profile;
+    return {
+      email: emails[0].value,
+      nickName: name.givenName,
+      googleId: profile.id,
+    };
   }
 }

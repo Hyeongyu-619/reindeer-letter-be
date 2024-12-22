@@ -8,6 +8,7 @@ import {
   Get,
   Query,
   Res,
+  Req,
 } from '@nestjs/common';
 import { AuthService } from './auth.service';
 import { LocalAuthGuard } from './guards/local-auth.guard';
@@ -452,16 +453,21 @@ export class AuthController {
         throw new UnauthorizedException('구글 인증에 실패했습니다.');
       }
 
-      if ('isNewUser' in user && user.isNewUser) {
+      // login 메서드 호출 시 response 객체 전달
+      const result = await this.authService.login(user, res);
+
+      if ('isNewUser' in result && result.isNewUser) {
         const redirectUrl = new URL('/profile', devConfig.FRONTEND_URL);
-        redirectUrl.searchParams.set('userData', JSON.stringify(user.userData));
+        redirectUrl.searchParams.set(
+          'userData',
+          JSON.stringify(result.userData),
+        );
         console.log('Redirecting new user to:', redirectUrl.toString());
         return res.redirect(redirectUrl.toString());
       }
 
-      const loginResult = await this.authService.login(user, res);
       const redirectUrl = new URL('/home', devConfig.FRONTEND_URL);
-      redirectUrl.searchParams.set('token', loginResult.access_token);
+      redirectUrl.searchParams.set('token', result.access_token);
       redirectUrl.searchParams.set('userId', user.id.toString());
       redirectUrl.searchParams.set('nickName', user.nickName);
       console.log('Redirecting existing user to:', redirectUrl.toString());
