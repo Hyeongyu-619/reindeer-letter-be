@@ -367,6 +367,11 @@ export class LettersService {
           updatedAt: true,
           receiverId: true,
           senderNickname: true,
+          receiver: {
+            select: {
+              nickName: true,
+            },
+          },
         },
         orderBy: {
           updatedAt: 'desc',
@@ -383,7 +388,10 @@ export class LettersService {
     ]);
 
     return {
-      items,
+      items: items.map((item) => ({
+        ...item,
+        receiverNickName: item.receiver?.nickName,
+      })),
       meta: {
         total,
         page,
