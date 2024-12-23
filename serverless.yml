@@ -1,18 +1,18 @@
 service: reindeer-letter-api
 
 plugins:
-  - serverless-plugin-typescript
+  - serverless-webpack
   - serverless-offline
-  - serverless-plugin-optimize
 
 provider:
   name: aws
   runtime: nodejs18.x
   region: ap-northeast-2
-  stage: ''
+  stage: dev
   environment:
     NODE_OPTIONS: '--enable-source-maps'
     TRANSFORM_ENABLED: 'true'
+    PRISMA_BINARY_TARGET: rhel-openssl-1.0.x
   apiGateway:
     shouldStartNameWithService: true
     minimumCompressionSize: 1024
@@ -37,7 +37,9 @@ package:
     - 'node_modules/.prisma/client/**'
     - '!node_modules/.prisma/client/libquery_engine-*'
     - 'node_modules/.prisma/client/libquery_engine-rhel-*'
+    - '!node_modules/prisma/libquery_engine-*'
     - '!node_modules/@prisma/engines/**'
+    - 'node_modules/.prisma/client/libquery_engine-rhel-openssl-1.0.x.so.node'
 
 custom:
   typescript:
@@ -50,22 +52,14 @@ custom:
       stage: ${self:provider.stage}
 
 functions:
-  api:
-    handler: dist/lambda.handler
+  main:
+    handler: dist/src/lambda.handler
     events:
       - http:
-          path: /{proxy+}
           method: ANY
-          cors:
-            origin: '*'
-            headers:
-              - Content-Type
-              - Authorization
-              - X-Amz-Date
-              - X-Api-Key
-              - X-Amz-Security-Token
-              - X-Amz-User-Agent
-            allowCredentials: false
+          path: /{proxy+}
+    environment:
+      PRISMA_QUERY_ENGINE_BINARY: '/var/task/node_modules/.prisma/client/libquery_engine-rhel-openssl-1.0.x.so.node'
 
   processScheduledLetters:
     handler: src/lambda-cron.handler
