@@ -57,8 +57,6 @@ export class AuthService {
 
   async validateUser(email: string, password: string): Promise<any> {
     try {
-      console.log('Login attempt:', { email });
-
       const user = await this.prisma.user.findUnique({
         where: { email },
         select: {
@@ -73,11 +71,8 @@ export class AuthService {
         },
       });
 
-      console.log('User found:', !!user);
-
       if (user && user.password) {
         const isPasswordValid = await bcrypt.compare(password, user.password);
-        console.log('Password valid:', isPasswordValid);
 
         if (isPasswordValid) {
           const { password: _, ...result } = user;
@@ -107,8 +102,6 @@ export class AuthService {
     response: Response,
   ) {
     try {
-      console.log('Login user data:', user);
-
       if ('isNewUser' in user && user.isNewUser) {
         return user;
       }

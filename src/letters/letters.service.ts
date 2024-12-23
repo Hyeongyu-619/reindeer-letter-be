@@ -3,6 +3,7 @@ import {
   NotFoundException,
   ForbiddenException,
   InternalServerErrorException,
+  BadRequestException,
 } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { CreateLetterDto } from './dto/create-letter.dto';
@@ -110,8 +111,6 @@ export class LettersService {
   ) {
     const skip = (page - 1) * limit;
 
-    console.log(userId);
-
     const whereClause = {
       receiverId: userId,
       isDraft: false,
@@ -218,8 +217,21 @@ export class LettersService {
   }
 
   async uploadImage(file: Express.Multer.File) {
-    const imageUrl = await this.s3Service.uploadFile(file, 'image');
-    return { imageUrl };
+    try {
+      // 파일 MIME 타입 확인
+      if (!file.mimetype.match(/(jpg|jpeg|png)/)) {
+        throw new BadRequestException('지원하지 않는 이미지 형식입니다.');
+      }
+
+      const imageUrl = await this.s3Service.uploadFile(file, 'image');
+
+      return { imageUrl };
+    } catch (error) {
+      console.error('Image upload failed:', error);
+      throw new InternalServerErrorException(
+        '이미지 업로드 중 오류가 발생했습니다: ' + error.message,
+      );
+    }
   }
 
   async uploadVoice(file: Express.Multer.File) {

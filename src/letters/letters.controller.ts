@@ -213,6 +213,17 @@ export class LettersController {
     )
     file: Express.Multer.File,
   ) {
+    // 파일 정보 로깅
+    console.log('Uploading file:', {
+      originalname: file.originalname,
+      mimetype: file.mimetype,
+      size: file.size,
+    });
+
+    if (!file.buffer) {
+      throw new BadRequestException('파일 데이터가 없습니다.');
+    }
+
     return this.lettersService.uploadImage(file);
   }
 

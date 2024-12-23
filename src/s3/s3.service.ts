@@ -42,12 +42,14 @@ export class S3Service {
         file.buffer = optimizedBuffer;
       }
 
+      const key = this.sanitizeFileName(
+        file.originalname,
+        type === 'image' ? 'images' : 'voices',
+      );
+
       const command = new PutObjectCommand({
         Bucket: devConfig.AWS_S3_BUCKET,
-        Key: this.sanitizeFileName(
-          file.originalname,
-          type === 'image' ? 'images' : 'voices',
-        ),
+        Key: key,
         Body: file.buffer,
         ContentType: file.mimetype,
         CacheControl: 'public, max-age=31536000',
@@ -55,12 +57,9 @@ export class S3Service {
 
       await this.s3Client.send(command);
 
-      return `https://${devConfig.AWS_S3_BUCKET}.s3.${
-        devConfig.AWS_REGION
-      }.amazonaws.com/${this.sanitizeFileName(
-        file.originalname,
-        type === 'image' ? 'images' : 'voices',
-      )}`;
+      const url = `https://${devConfig.AWS_S3_BUCKET}.s3.${devConfig.AWS_REGION}.amazonaws.com/${key}`;
+
+      return url;
     } catch (error: unknown) {
       console.error('S3 업로드 에러:', error);
       throw new InternalServerErrorException(

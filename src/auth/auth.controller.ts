@@ -207,8 +207,6 @@ export class AuthController {
     @Request() req: RequestWithUser,
     @Res({ passthrough: true }) res: Response,
   ) {
-    console.log('Logout request:', req.user);
-
     if (!req.user || !req.user.id) {
       throw new UnauthorizedException('인증 정보가 없습니다.');
     }
@@ -396,7 +394,6 @@ export class AuthController {
   ): Promise<Record<string, any>> {
     try {
       const { user } = req;
-      console.log('Kakao callback received user:', user);
 
       if (!user) {
         throw new UnauthorizedException('카카오 인증에 실패했습니다.');
@@ -474,7 +471,6 @@ export class AuthController {
   ): Promise<Record<string, any>> {
     try {
       const { user } = req;
-      console.log('Callback received user:', user);
 
       if (!user) {
         throw new UnauthorizedException('구글 인증에 실패했습니다.');
