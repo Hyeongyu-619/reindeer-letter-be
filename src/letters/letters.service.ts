@@ -28,6 +28,7 @@ export class LettersService {
       scheduledAt,
       senderNickName,
       imageUrls,
+      audioUrl,
       ...letterData
     } = createLetterDto;
 

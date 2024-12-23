@@ -89,4 +89,13 @@ export class CreateLetterDto {
   @IsNotEmpty()
   @MaxLength(20)
   senderNickName: string;
+
+  @ApiProperty({
+    example: 'https://example.com/audio.mp3',
+    description: '음성 파일 URL',
+    required: false,
+  })
+  @IsString()
+  @IsOptional()
+  audioUrl?: string;
 }
