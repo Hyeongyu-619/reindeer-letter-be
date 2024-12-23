@@ -30,6 +30,7 @@ import {
   ApiConsumes,
   ApiBody,
   ApiQuery,
+  ApiParam,
 } from '@nestjs/swagger';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { Express } from 'express';
@@ -405,7 +406,7 @@ export class LettersController {
 
   @ApiOperation({
     summary: '임시저장 편지 수정 API',
-    description: '임시저장된 편지를 수정합니다.',
+    description: '임시저장된 편지�� 수정합니다.',
   })
   @Put('draft/:id')
   @UseGuards(JwtAuthGuard)
@@ -454,11 +455,53 @@ export class LettersController {
 
   @ApiOperation({
     summary: '임시저장 편지 발송 API',
-    description: '임시저장된 편지를 발송하고 임시저장 목록에서 제거합니다.',
+    description: '임시저장된 편지를 발송하고 임시저��� 목록에서 제거합니다.',
   })
+  @ApiParam({
+    name: 'id',
+    required: true,
+    description: '임시저장 편지 ID',
+    type: 'number',
+  })
+  @ApiBody({
+    type: CreateLetterDto,
+    description: '발송할 편지 데이터',
+  })
+  @ApiResponse({
+    status: 201,
+    description: '편지 발송 성공',
+    schema: {
+      example: {
+        id: 1,
+        title: '안녕하세요',
+        description: '반갑습니다',
+        imageUrls: ['https://example.com/image.jpg'],
+        bgmUrl: 'https://example.com/bgm.mp3',
+        category: 'TEXT',
+        isOpen: false,
+        scheduledAt: '2024-12-25T00:00:00.000Z',
+        senderNickname: '익명의 친구',
+        audioUrl: 'https://example.com/voice.mp3',
+        isDraft: false,
+        createdAt: '2024-03-19T12:00:00.000Z',
+        updatedAt: '2024-03-19T12:00:00.000Z',
+      },
+    },
+  })
+  @ApiResponse({
+    status: 404,
+    description: '임시저장된 편지를 찾을 수 없음',
+    schema: {
+      example: {
+        statusCode: 404,
+        message: '임시저장된 편지를 찾을 수 없습니다.',
+        error: 'Not Found',
+      },
+    },
+  })
+  @ApiBearerAuth('access-token')
   @Post('draft/:id/send')
   @UseGuards(JwtAuthGuard)
-  @ApiBearerAuth('access-token')
   async sendDraft(
     @Param('id') id: string,
     @Body() createLetterDto: CreateLetterDto,
