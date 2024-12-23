@@ -562,4 +562,57 @@ export class LettersService {
       );
     }
   }
+
+  async createFromDraft(
+    draftId: number,
+    createLetterDto: CreateLetterDto,
+    userId: number,
+  ) {
+    return this.prisma.$transaction(async (prisma) => {
+      const draft = await prisma.letter.findFirst({
+        where: {
+          id: draftId,
+          senderId: userId,
+          isDraft: true,
+        },
+      });
+
+      if (!draft) {
+        throw new NotFoundException('임시저장된 편지를 찾을 수 없습니다.');
+      }
+
+      // 새 편지 생성
+      const newLetter = await prisma.letter.create({
+        data: {
+          title: createLetterDto.title,
+          description: createLetterDto.description,
+          imageUrls: createLetterDto.imageUrls,
+          bgmUrl: createLetterDto.bgmUrl,
+          category: createLetterDto.category,
+          isOpen: createLetterDto.isOpen,
+          scheduledAt: createLetterDto.scheduledAt
+            ? new Date(createLetterDto.scheduledAt)
+            : null,
+          sender: {
+            connect: { id: userId },
+          },
+          receiver: {
+            connect: { id: createLetterDto.receiverId },
+          },
+          senderNickname: createLetterDto.senderNickName,
+          audioUrl: createLetterDto.audioUrl,
+          isDraft: false,
+        },
+      });
+
+      // 임시저장 편지 삭제
+      await prisma.letter.delete({
+        where: {
+          id: draftId,
+        },
+      });
+
+      return newLetter;
+    });
+  }
 }

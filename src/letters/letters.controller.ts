@@ -451,4 +451,23 @@ export class LettersController {
   async getBgmList() {
     return this.lettersService.getBgmList();
   }
+
+  @ApiOperation({
+    summary: '임시저장 편지 발송 API',
+    description: '임시저장된 편지를 발송하고 임시저장 목록에서 제거합니다.',
+  })
+  @Post('draft/:id/send')
+  @UseGuards(JwtAuthGuard)
+  @ApiBearerAuth('access-token')
+  async sendDraft(
+    @Param('id') id: string,
+    @Body() createLetterDto: CreateLetterDto,
+    @Request() req: RequestWithUser,
+  ) {
+    return this.lettersService.createFromDraft(
+      +id,
+      createLetterDto,
+      req.user.id,
+    );
+  }
 }
