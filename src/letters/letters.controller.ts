@@ -16,6 +16,8 @@ import {
   UnauthorizedException,
   Put,
   Delete,
+  HttpStatus,
+  InternalServerErrorException,
 } from '@nestjs/common';
 import { LettersService } from './letters.service';
 import { CreateLetterDto } from './dto/create-letter.dto';
@@ -33,6 +35,9 @@ import { FileInterceptor } from '@nestjs/platform-express';
 import { Express } from 'express';
 import { SaveDraftLetterDto } from './dto/save-draft-letter.dto';
 import { Category } from '@prisma/client';
+import * as devConfig from '../../dev.json';
+import { S3Service } from '../s3/s3.service';
+import { memoryStorage } from 'multer';
 
 interface RequestWithUser extends Request {
   user: {
@@ -44,7 +49,10 @@ interface RequestWithUser extends Request {
 @ApiTags('Letters')
 @Controller('letters')
 export class LettersController {
-  constructor(private readonly lettersService: LettersService) {}
+  constructor(
+    private readonly lettersService: LettersService,
+    private readonly s3Service: S3Service,
+  ) {}
 
   @ApiOperation({
     summary: '편지 작성 API',
@@ -94,7 +102,7 @@ export class LettersController {
   @ApiQuery({
     name: 'limit',
     required: false,
-    description: '페이지당 항목 수 (기본값: 10)',
+    description: '페이지네이션 항목 수 (기본값: 10)',
     type: Number,
   })
   @ApiQuery({
@@ -195,23 +203,62 @@ export class LettersController {
     },
   })
   @Post('upload/image')
-  @UseInterceptors(FileInterceptor('file'))
-  async uploadImage(
-    @UploadedFile(
-      new ParseFilePipe({
-        validators: [
-          new MaxFileSizeValidator({ maxSize: 5 * 1024 * 1024 }), // 5MB
-          new FileTypeValidator({ fileType: /(jpg|jpeg|png)$/ }),
-        ],
-      }),
-    )
-    file: Express.Multer.File,
-  ) {
-    if (!file.buffer) {
-      throw new BadRequestException('파일 데이터가 없습니다.');
+  @UseInterceptors(
+    FileInterceptor('file', {
+      storage: memoryStorage(),
+      limits: {
+        fileSize: 5 * 1024 * 1024, // 5MB
+      },
+      fileFilter: (req, file, callback) => {
+        if (!file.originalname.match(/\.(jpg|jpeg|png)$/i)) {
+          return callback(
+            new BadRequestException('이미지 파일만 업로드 가능합니다.'),
+            false,
+          );
+        }
+        callback(null, true);
+      },
+    }),
+  )
+  @ApiConsumes('multipart/form-data')
+  @ApiBody({
+    schema: {
+      type: 'object',
+      properties: {
+        file: {
+          type: 'string',
+          format: 'binary',
+          description: '업로드할 이미지 파일 (jpg, jpeg, png만 허용, 최대 5MB)',
+        },
+      },
+    },
+  })
+  async uploadImage(@UploadedFile() file: Express.Multer.File) {
+    if (!file) {
+      throw new BadRequestException('파일이 없습니다.');
     }
 
-    return this.lettersService.uploadImage(file);
+    const fileKey = `${Date.now()}-${Math.random()
+      .toString(36)
+      .substring(2)}.${file.originalname.split('.').pop()}`;
+
+    const filePath = `images/${fileKey}`;
+
+    try {
+      await this.s3Service.uploadToS3({
+        Key: filePath,
+        Body: file.buffer,
+        ContentType: file.mimetype,
+      });
+
+      return {
+        imageUrl: `https://${devConfig.AWS_S3_BUCKET}.s3.${devConfig.AWS_REGION}.amazonaws.com/${filePath}`,
+        fileKey,
+      };
+    } catch (error) {
+      console.error('Upload error:', error);
+      throw new InternalServerErrorException('파일 업로드에 실패했습니다.');
+    }
   }
 
   @ApiOperation({

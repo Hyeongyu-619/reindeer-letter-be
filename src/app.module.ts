@@ -10,6 +10,8 @@ import { AppService } from './app.service';
 import { UsersModule } from './users/users.module';
 import { ThrottlerModule } from '@nestjs/throttler';
 import { EmailModule } from './email/email.module';
+import { MulterModule } from '@nestjs/platform-express';
+import { memoryStorage } from 'multer';
 
 @Module({
   imports: [
@@ -28,6 +30,9 @@ import { EmailModule } from './email/email.module';
     S3Module,
     UsersModule,
     EmailModule,
+    MulterModule.register({
+      storage: memoryStorage(),
+    }),
   ],
   controllers: [AppController, AuthController],
   providers: [AppService],

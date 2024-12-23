@@ -217,26 +217,41 @@ export class LettersService {
   }
 
   async uploadImage(file: Express.Multer.File) {
-    try {
-      // 파일 MIME 타입 확인
-      if (!file.mimetype.match(/(jpg|jpeg|png)/)) {
-        throw new BadRequestException('지원하지 않는 이미지 형식입니다.');
-      }
+    const fileKey = `${Date.now()}-${Math.random()
+      .toString(36)
+      .substring(2)}.${file.originalname.split('.').pop()}`;
 
-      const imageUrl = await this.s3Service.uploadFile(file, 'image');
+    const filePath = `images/${fileKey}`;
 
-      return { imageUrl };
-    } catch (error) {
-      console.error('Image upload failed:', error);
-      throw new InternalServerErrorException(
-        '이미지 업로드 중 오류가 발생했습니다: ' + error.message,
-      );
-    }
+    await this.s3Service.uploadToS3({
+      Key: filePath,
+      Body: file.buffer,
+      ContentType: file.mimetype,
+    });
+
+    return {
+      imageUrl: `https://${devConfig.AWS_S3_BUCKET}.s3.${devConfig.AWS_REGION}.amazonaws.com/${filePath}`,
+      fileKey,
+    };
   }
 
   async uploadVoice(file: Express.Multer.File) {
-    const voiceUrl = await this.s3Service.uploadFile(file, 'audio');
-    return { voiceUrl };
+    const fileKey = `${Date.now()}-${Math.random()
+      .toString(36)
+      .substring(2)}.${file.originalname.split('.').pop()}`;
+
+    const filePath = `voices/${fileKey}`;
+
+    await this.s3Service.uploadToS3({
+      Key: filePath,
+      Body: file.buffer,
+      ContentType: file.mimetype,
+    });
+
+    return {
+      voiceUrl: `https://${devConfig.AWS_S3_BUCKET}.s3.${devConfig.AWS_REGION}.amazonaws.com/${filePath}`,
+      fileKey,
+    };
   }
 
   async processScheduledLetters() {

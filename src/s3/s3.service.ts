@@ -18,54 +18,23 @@ export class S3Service {
     });
   }
 
-  private sanitizeFileName(fileName: string, prefix: string): string {
-    const timestamp = Date.now();
-    const fileExtension = fileName.split('.').pop();
-    const randomString = Math.random().toString(36).substring(2, 15);
+  async uploadToS3({
+    Key,
+    Body,
+    ContentType,
+  }: {
+    Key: string;
+    Body: Buffer;
+    ContentType: string;
+  }) {
+    const command = new PutObjectCommand({
+      Bucket: devConfig.AWS_S3_BUCKET,
+      Key,
+      Body,
+      ContentType,
+      CacheControl: 'public, max-age=31536000',
+    });
 
-    return `${prefix}/${timestamp}-${randomString}.${fileExtension}`;
-  }
-
-  async uploadFile(
-    file: Express.Multer.File,
-    type: 'image' | 'audio',
-  ): Promise<string> {
-    try {
-      if (type === 'image') {
-        const optimizedBuffer = await sharp(file.buffer)
-          .resize(1920, null, {
-            withoutEnlargement: true,
-            fit: 'inside',
-          })
-          .toBuffer();
-
-        file.buffer = optimizedBuffer;
-      }
-
-      const key = this.sanitizeFileName(
-        file.originalname,
-        type === 'image' ? 'images' : 'voices',
-      );
-
-      const command = new PutObjectCommand({
-        Bucket: devConfig.AWS_S3_BUCKET,
-        Key: key,
-        Body: file.buffer,
-        ContentType: file.mimetype,
-        CacheControl: 'public, max-age=31536000',
-      });
-
-      await this.s3Client.send(command);
-
-      const url = `https://${devConfig.AWS_S3_BUCKET}.s3.${devConfig.AWS_REGION}.amazonaws.com/${key}`;
-
-      return url;
-    } catch (error: unknown) {
-      console.error('S3 업로드 에러:', error);
-      throw new InternalServerErrorException(
-        '파일 업로드 중 오류가 발생했습니다: ' +
-          (error instanceof Error ? error.message : '알 수 없는 오류'),
-      );
-    }
+    return this.s3Client.send(command);
   }
 }
