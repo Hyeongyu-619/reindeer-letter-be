@@ -2,6 +2,7 @@ import { Injectable, InternalServerErrorException } from '@nestjs/common';
 import { S3Client, PutObjectCommand } from '@aws-sdk/client-s3';
 import { Express } from 'express';
 import * as devConfig from '../../dev.json';
+import sharp from 'sharp';
 
 @Injectable()
 export class S3Service {
@@ -30,60 +31,36 @@ export class S3Service {
     type: 'image' | 'audio',
   ): Promise<string> {
     try {
-      const bucket = devConfig.AWS_S3_BUCKET;
+      if (type === 'image') {
+        const optimizedBuffer = await sharp(file.buffer)
+          .resize(1920, null, {
+            withoutEnlargement: true,
+            fit: 'inside',
+          })
+          .toBuffer();
 
-      if (!bucket) {
-        throw new InternalServerErrorException(
-          'AWS S3 버킷이 설정되지 않았습니다.',
-        );
+        file.buffer = optimizedBuffer;
       }
-
-      // 파일 타입별 설정
-      const config = {
-        image: {
-          maxSize: 5 * 1024 * 1024, // 5MB
-          allowedTypes: /(jpg|jpeg|png)$/,
-          folder: 'images',
-        },
-        audio: {
-          maxSize: 10 * 1024 * 1024, // 10MB
-          allowedTypes: /(audio\/wav|audio\/mpeg|audio\/mp4|audio\/x-m4a)$/,
-          folder: 'voices',
-        },
-      };
-
-      const settings = config[type];
-
-      // 파일 크기 검증
-      if (file.size > settings.maxSize) {
-        throw new InternalServerErrorException(
-          `파일 크기는 ${
-            settings.maxSize / (1024 * 1024)
-          }MB를 초과할 수 없습니다.`,
-        );
-      }
-
-      // 파일 타입 검증
-      if (!file.mimetype.match(settings.allowedTypes)) {
-        throw new InternalServerErrorException(
-          `지원하지 않는 파일 형식입니다. ${
-            type === 'image' ? 'jpg, jpeg, png' : 'mp3, wav, m4a'
-          } 파일만 업로드 가능합니다.`,
-        );
-      }
-
-      const key = this.sanitizeFileName(file.originalname, settings.folder);
 
       const command = new PutObjectCommand({
-        Bucket: bucket,
-        Key: key,
+        Bucket: devConfig.AWS_S3_BUCKET,
+        Key: this.sanitizeFileName(
+          file.originalname,
+          type === 'image' ? 'images' : 'voices',
+        ),
         Body: file.buffer,
         ContentType: file.mimetype,
+        CacheControl: 'public, max-age=31536000',
       });
 
       await this.s3Client.send(command);
 
-      return `https://${bucket}.s3.${devConfig.AWS_REGION}.amazonaws.com/${key}`;
+      return `https://${devConfig.AWS_S3_BUCKET}.s3.${
+        devConfig.AWS_REGION
+      }.amazonaws.com/${this.sanitizeFileName(
+        file.originalname,
+        type === 'image' ? 'images' : 'voices',
+      )}`;
     } catch (error: unknown) {
       console.error('S3 업로드 에러:', error);
       throw new InternalServerErrorException(
