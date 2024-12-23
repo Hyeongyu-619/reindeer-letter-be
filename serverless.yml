@@ -15,6 +15,10 @@ provider:
   apiGateway:
     shouldStartNameWithService: true
     minimumCompressionSize: 1024
+    binaryMediaTypes:
+      - 'multipart/form-data'
+      - 'image/*'
+      - '*/*'
 
 package:
   patterns:

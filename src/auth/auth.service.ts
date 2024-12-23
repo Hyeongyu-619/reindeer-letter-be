@@ -384,7 +384,6 @@ export class AuthService {
     };
   }> {
     const { kakaoId, email, nickname } = kakaoUserDto;
-    console.log('Processing Kakao user:', kakaoUserDto);
 
     const kakaoIdString = kakaoId.toString();
 
@@ -472,7 +471,6 @@ export class AuthService {
     };
   }> {
     const { googleId, email, nickname } = googleUserDto;
-    console.log('Processing Google user:', googleUserDto);
 
     const existingUser = await this.prisma.user.findFirst({
       where: {

@@ -23,13 +23,8 @@ export class KakaoStrategy extends PassportStrategy(Strategy, 'kakao') {
     profile: any,
   ): Promise<any> {
     try {
-      console.log('=== Kakao Validate Start ===');
-      console.log('Profile:', JSON.stringify(profile, null, 2));
-
       const { id, username, _json } = profile;
       const email = _json?.kakao_account?.email;
-
-      console.log('Extracted info:', { id, username, email });
 
       if (!email) {
         throw new Error('이메일 제공에 동의해주세요.');
@@ -40,9 +35,6 @@ export class KakaoStrategy extends PassportStrategy(Strategy, 'kakao') {
         email,
         nickname: username || `사용자${id}`,
       });
-
-      console.log('Final user result:', user);
-      console.log('=== Kakao Validate End ===');
 
       if (!user.isNewUser) {
         return {

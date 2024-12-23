@@ -4,9 +4,12 @@ import { SwaggerModule, DocumentBuilder } from '@nestjs/swagger';
 import { ValidationPipe } from '@nestjs/common';
 import cookieParser from 'cookie-parser';
 import * as devConfig from '../dev.json';
+import bodyParser from 'body-parser';
 
 async function bootstrap() {
-  const app = await NestFactory.create(AppModule);
+  const app = await NestFactory.create(AppModule, {
+    rawBody: true,
+  });
 
   app.use(cookieParser());
   app.enableCors({
@@ -24,6 +27,8 @@ async function bootstrap() {
       },
     }),
   );
+
+  app.use(bodyParser.raw({ type: '*/*', limit: '10mb' }));
 
   // Swagger 설정
   const config = new DocumentBuilder()

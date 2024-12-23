@@ -25,15 +25,11 @@ export class GoogleStrategy extends PassportStrategy(Strategy) {
     const { id, emails, displayName } = profile;
     const email = emails[0].value;
 
-    console.log('Google profile:', { id, email, displayName });
-
     const user = await this.authService.findOrCreateGoogleUser({
       googleId: id,
       email,
       nickname: displayName || `사용자${id}`,
     });
-
-    console.log('Validated user:', user);
 
     if (user.isNewUser) {
       return user;

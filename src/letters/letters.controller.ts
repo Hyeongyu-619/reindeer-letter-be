@@ -110,9 +110,6 @@ export class LettersController {
     @Request() req: RequestWithUser,
     @Query() query: Record<string, any>,
   ) {
-    console.log('전체 req.user:', req.user);
-    console.log('id:', req.user?.id);
-
     if (!req.user?.id) {
       throw new UnauthorizedException('사용자 정보를 찾을 수 없습니다.');
     }
@@ -163,9 +160,6 @@ export class LettersController {
   @UseGuards(JwtAuthGuard)
   @Get(':id')
   findOne(@Param('id') id: string, @Request() req: RequestWithUser) {
-    console.log('Request Headers:', req.headers);
-    console.log('User Info in findOne:', req.user);
-
     if (!req.user?.id) {
       throw new UnauthorizedException('사용자 인증이 필요합니다.');
     }
@@ -213,13 +207,6 @@ export class LettersController {
     )
     file: Express.Multer.File,
   ) {
-    // 파일 정보 로깅
-    console.log('Uploading file:', {
-      originalname: file.originalname,
-      mimetype: file.mimetype,
-      size: file.size,
-    });
-
     if (!file.buffer) {
       throw new BadRequestException('파일 데이터가 없습니다.');
     }
