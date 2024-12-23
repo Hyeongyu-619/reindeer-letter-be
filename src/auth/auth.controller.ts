@@ -392,21 +392,32 @@ export class AuthController {
   })
   async kakaoLoginCallback(
     @Request() req: RequestWithUser,
-    @Res({ passthrough: true }) res: Response,
-  ) {
-    const { user } = req;
-    if (!user) {
-      throw new UnauthorizedException('카카오 인증에 실패했습니다.');
-    }
+    @Res() res: Response,
+  ): Promise<Record<string, any>> {
+    try {
+      const { user } = req;
+      console.log('Kakao callback received user:', user);
 
-    if ('isNewUser' in user && user.isNewUser) {
-      return {
-        isNewUser: true,
-        userData: user.userData,
-      };
-    }
+      if (!user) {
+        throw new UnauthorizedException('카카오 인증에 실패했습니다.');
+      }
 
-    return this.authService.login(user, res);
+      if ('isNewUser' in user && user.isNewUser) {
+        return res.status(200).json({
+          isNewUser: true,
+          userData: user.userData,
+          id: user.id,
+        });
+      }
+
+      const result = await this.authService.login(user, res);
+      return res.status(200).json(result);
+    } catch (error) {
+      console.error('Kakao callback error:', error);
+      return res
+        .status(401)
+        .json({ error: 'Authentication failed', details: error.message });
+    }
   }
 
   @Post('kakao/register')
@@ -422,18 +433,33 @@ export class AuthController {
         mufflerColor: MufflerColor;
       };
     },
+    @Res({ passthrough: true }) res: Response,
   ) {
-    return this.authService.registerKakaoUser(
+    const result = await this.authService.registerKakaoUser(
       registerDto.kakaoId,
       registerDto.email,
       registerDto.additionalData,
     );
+
+    // 쿠키에 리프레시 토큰 설정
+    res.cookie('refresh_token', result.refresh_token, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: 'strict',
+      maxAge: 7 * 24 * 60 * 60 * 1000,
+    });
+
+    // 액세스 토큰과 사용자 정보 반환
+    return {
+      access_token: result.access_token,
+      user: result.user,
+    };
   }
 
   @Get('google')
   @UseGuards(GoogleAuthGuard)
   @ApiOperation({
-    summary: '구글 로그인 API',
+    summary: '��글 로그인 API',
     description: '구글 OAuth를 통한 로그인을 시작합니다.',
   })
   async googleLogin() {
@@ -458,6 +484,7 @@ export class AuthController {
         return res.status(200).json({
           isNewUser: true,
           userData: user.userData,
+          id: user.id,
         });
       }
 

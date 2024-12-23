@@ -189,7 +189,7 @@ export class AuthService {
 
   async logout(userId: number) {
     if (!userId) {
-      throw new UnauthorizedException('유효하지 않은 사용자��니다.');
+      throw new UnauthorizedException('유효하지 않은 사용자입니다.');
     }
 
     try {
@@ -241,7 +241,7 @@ export class AuthService {
       where: { nickName },
     });
     if (existingNickname) {
-      throw new ConflictException('이미 사용 ���인 닉네임입니다.');
+      throw new ConflictException('이미 사용 중인 닉네임입니다.');
     }
 
     // 비밀번호 해시화 및 사용자 생성
@@ -380,32 +380,37 @@ export class AuthService {
     return { imageUrl };
   }
 
-  async findOrCreateKakaoUser(kakaoUserDto: SocialUserDto) {
+  async findOrCreateKakaoUser(kakaoUserDto: SocialUserDto): Promise<{
+    isNewUser: boolean;
+    user?: any;
+    userData?: {
+      kakaoId: string;
+      email: string;
+      nickname: string;
+    };
+  }> {
     const { kakaoId, email, nickname } = kakaoUserDto;
     console.log('Processing Kakao user:', kakaoUserDto);
 
-    // 기존 사용자 찾기
+    const kakaoIdString = kakaoId.toString();
+
     const existingUser = await this.prisma.user.findFirst({
       where: {
-        OR: [{ kakaoId }, { email }],
+        OR: [{ kakaoId: kakaoIdString }, { email }],
       },
     });
 
     if (existingUser) {
-      // 기존 사용자
-      const tokens = await this.generateToken(existingUser);
       return {
         isNewUser: false,
         user: existingUser,
-        ...tokens,
       };
     }
 
-    // 새로운 사용자
     return {
       isNewUser: true,
       userData: {
-        kakaoId,
+        kakaoId: kakaoIdString,
         email,
         nickname,
       },
@@ -434,25 +439,16 @@ export class AuthService {
         email,
         kakaoId,
         nickName: additionalData.nickname,
-        password: '', // 소셜 로그인은 비밀번호 불필요
         profileImageUrl,
-      },
-      select: {
-        id: true,
-        email: true,
-        nickName: true,
-        profileImageUrl: true,
-        createdAt: true,
-        updatedAt: true,
-        refreshToken: true,
-        kakaoId: true,
       },
     });
 
     const tokens = await this.generateToken(user);
+
     return {
+      access_token: tokens.access_token,
+      refresh_token: tokens.refresh_token,
       user,
-      ...tokens,
     };
   }
 
@@ -475,8 +471,6 @@ export class AuthService {
   async findOrCreateGoogleUser(googleUserDto: SocialUserDto): Promise<{
     isNewUser: boolean;
     user?: any;
-    access_token?: string;
-    refresh_token?: string;
     userData?: {
       googleId: string;
       email: string;

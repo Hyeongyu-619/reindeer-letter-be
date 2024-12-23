@@ -5,13 +5,13 @@ import { AuthService } from '../auth.service';
 import * as devConfig from '../../../dev.json';
 
 @Injectable()
-export class KakaoStrategy extends PassportStrategy(Strategy) {
+export class KakaoStrategy extends PassportStrategy(Strategy, 'kakao') {
   constructor(private authService: AuthService) {
     super({
       clientID: devConfig.KAKAO_CLIENT_ID,
       clientSecret: devConfig.KAKAO_CLIENT_SECRET,
       callbackURL: devConfig.KAKAO_CALLBACK_URL,
-      scope: ['account_email'],
+      scope: ['account_email', 'profile_nickname'],
       passReqToCallback: true,
     });
   }
@@ -22,21 +22,41 @@ export class KakaoStrategy extends PassportStrategy(Strategy) {
     refreshToken: string,
     profile: any,
   ): Promise<any> {
-    const { id, username, _json } = profile;
-    const email = _json?.kakao_account?.email;
-    const code = req.query.code;
+    try {
+      console.log('=== Kakao Validate Start ===');
+      console.log('Profile:', JSON.stringify(profile, null, 2));
 
-    if (!email) {
-      throw new Error('이메일 제공에 동의해주세요.');
+      const { id, username, _json } = profile;
+      const email = _json?.kakao_account?.email;
+
+      console.log('Extracted info:', { id, username, email });
+
+      if (!email) {
+        throw new Error('이메일 제공에 동의해주세요.');
+      }
+
+      const user = await this.authService.findOrCreateKakaoUser({
+        kakaoId: id,
+        email,
+        nickname: username || `사용자${id}`,
+      });
+
+      console.log('Final user result:', user);
+      console.log('=== Kakao Validate End ===');
+
+      if (!user.isNewUser) {
+        return {
+          id: user.user.id,
+          email: user.user.email,
+          nickName: user.user.nickName,
+          profileImageUrl: user.user.profileImageUrl,
+        };
+      }
+
+      return user;
+    } catch (error) {
+      console.error('Kakao validate error:', error);
+      throw error;
     }
-
-    const user = await this.authService.findOrCreateKakaoUser({
-      kakaoId: id,
-      email,
-      nickname: username || `사용자${id}`,
-      code,
-    });
-
-    return user;
   }
 }
