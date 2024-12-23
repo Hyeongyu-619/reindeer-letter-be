@@ -26,9 +26,10 @@ model User {
 model Letter {
   id             Int       @id @default(autoincrement())
   title          String
-  description    String
+  description    String?
   imageUrls      String[]
   bgmUrl         String?
+  audioUrl       String?
   category       Category
   isOpen         Boolean   @default(false)
   createdAt      DateTime  @default(now())

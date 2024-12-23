@@ -8,6 +8,7 @@ import {
   MaxLength,
   IsOptional,
   IsArray,
+  ValidateIf,
 } from 'class-validator';
 import { Category } from '@prisma/client';
 
@@ -23,9 +24,11 @@ export class CreateLetterDto {
   @ApiProperty({
     example: '오랜만에 연락하네...',
     description: '편지 내용',
+    required: false,
   })
   @IsString()
-  @IsNotEmpty()
+  @ValidateIf((o) => o.category !== 'VOICE')
+  @IsNotEmpty({ message: 'TEXT 카테고리의 경우 내용이 필요합니다.' })
   description: string;
 
   @ApiProperty({
@@ -93,9 +96,9 @@ export class CreateLetterDto {
   @ApiProperty({
     example: 'https://example.com/audio.mp3',
     description: '음성 파일 URL',
-    required: false,
   })
   @IsString()
-  @IsOptional()
-  audioUrl?: string;
+  @ValidateIf((o) => o.category === 'VOICE')
+  @IsNotEmpty({ message: 'VOICE 카테고리의 경우 음성 파일이 필요합니다.' })
+  audioUrl: string;
 }
