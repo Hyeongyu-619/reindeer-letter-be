@@ -18,6 +18,7 @@ import {
   MufflerColor,
   ReindeerSkin,
 } from '../constants/reindeer-images';
+import * as devConfig from '../../dev.json';
 
 interface RequestWithUser extends Request {
   user: {
@@ -130,7 +131,7 @@ export class AuthService {
 
       response.cookie('refresh_token', refreshToken, {
         httpOnly: true,
-        secure: process.env.NODE_ENV === 'production',
+        secure: devConfig.NODE_ENV === 'production',
         sameSite: 'strict',
         maxAge: 7 * 24 * 60 * 60 * 1000,
       });
@@ -225,7 +226,7 @@ export class AuthService {
     });
 
     if (!verification || !verification.verified) {
-      throw new BadRequestException('이메일 인증이 필요합니다.');
+      throw new BadRequestException('이메일 ��증이 필요합니다.');
     }
 
     // 이메일 중복 체크

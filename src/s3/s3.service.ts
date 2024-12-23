@@ -5,22 +5,14 @@ import * as devConfig from '../../dev.json';
 
 @Injectable()
 export class S3Service {
-  private s3Client: S3Client;
+  public readonly s3Client: S3Client;
 
   constructor() {
-    const region = 'ap-northeast-2';
-    const accessKeyId = devConfig.ACCESS_KEY;
-    const secretAccessKey = devConfig.SECRET_KEY;
-
-    if (!accessKeyId || !secretAccessKey) {
-      throw new InternalServerErrorException('AWS 설정이 올바르지 않습니다.');
-    }
-
     this.s3Client = new S3Client({
-      region,
+      region: devConfig.AWS_REGION,
       credentials: {
-        accessKeyId,
-        secretAccessKey,
+        accessKeyId: devConfig.ACCESS_KEY,
+        secretAccessKey: devConfig.SECRET_KEY,
       },
     });
   }
@@ -38,7 +30,7 @@ export class S3Service {
     type: 'image' | 'audio',
   ): Promise<string> {
     try {
-      const bucket = process.env.AWS_S3_BUCKET;
+      const bucket = devConfig.AWS_S3_BUCKET;
 
       if (!bucket) {
         throw new InternalServerErrorException(
@@ -91,7 +83,7 @@ export class S3Service {
 
       await this.s3Client.send(command);
 
-      return `https://${bucket}.s3.${process.env.AWS_REGION}.amazonaws.com/${key}`;
+      return `https://${bucket}.s3.${devConfig.AWS_REGION}.amazonaws.com/${key}`;
     } catch (error: unknown) {
       console.error('S3 업로드 에러:', error);
       throw new InternalServerErrorException(

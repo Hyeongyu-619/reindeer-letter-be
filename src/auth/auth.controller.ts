@@ -216,7 +216,7 @@ export class AuthController {
     try {
       res.clearCookie('refresh_token', {
         httpOnly: true,
-        secure: process.env.NODE_ENV === 'production',
+        secure: devConfig.NODE_ENV === 'production',
         sameSite: 'strict',
         path: '/',
       });
@@ -444,7 +444,7 @@ export class AuthController {
     // 쿠키에 리프레시 토큰 설정
     res.cookie('refresh_token', result.refresh_token, {
       httpOnly: true,
-      secure: process.env.NODE_ENV === 'production',
+      secure: devConfig.NODE_ENV === 'production',
       sameSite: 'strict',
       maxAge: 7 * 24 * 60 * 60 * 1000,
     });
@@ -459,7 +459,7 @@ export class AuthController {
   @Get('google')
   @UseGuards(GoogleAuthGuard)
   @ApiOperation({
-    summary: '��글 로그인 API',
+    summary: '구글 로그인 API',
     description: '구글 OAuth를 통한 로그인을 시작합니다.',
   })
   async googleLogin() {
@@ -522,7 +522,7 @@ export class AuthController {
     // 쿠키에 리프레시 토큰 설정
     res.cookie('refresh_token', result.refresh_token, {
       httpOnly: true,
-      secure: process.env.NODE_ENV === 'production',
+      secure: devConfig.NODE_ENV === 'production',
       sameSite: 'strict',
       maxAge: 7 * 24 * 60 * 60 * 1000,
     });

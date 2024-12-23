@@ -18,7 +18,7 @@ async function bootstrap() {
 
   app.useGlobalPipes(
     new ValidationPipe({
-      transform: process.env.TRANSFORM_ENABLED === 'true',
+      transform: devConfig.TRANSFORM_ENABLED,
       transformOptions: {
         enableImplicitConversion: true,
       },

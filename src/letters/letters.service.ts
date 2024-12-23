@@ -2,6 +2,7 @@ import {
   Injectable,
   NotFoundException,
   ForbiddenException,
+  InternalServerErrorException,
 } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { CreateLetterDto } from './dto/create-letter.dto';
@@ -10,6 +11,8 @@ import { Express } from 'express';
 import { EmailService } from '../email/email.service';
 import { SaveDraftLetterDto } from './dto/save-draft-letter.dto';
 import { Category } from '@prisma/client';
+import { ListObjectsV2Command } from '@aws-sdk/client-s3';
+import * as devConfig from '../../dev.json';
 
 @Injectable()
 export class LettersService {
@@ -495,5 +498,32 @@ export class LettersService {
     return this.prisma.letter.delete({
       where: { id: draftId },
     });
+  }
+
+  async getBgmList() {
+    try {
+      const bucket = devConfig.AWS_S3_BUCKET;
+      const prefix = 'bgm/';
+
+      const command = new ListObjectsV2Command({
+        Bucket: bucket,
+        Prefix: prefix,
+      });
+
+      const response = await this.s3Service.s3Client.send(command);
+
+      const bgms =
+        response.Contents?.map((item) => ({
+          url: `https://${bucket}.s3.${devConfig.AWS_REGION}.amazonaws.com/${item.Key}`,
+          name: item.Key?.replace(prefix, ''),
+        })) || [];
+
+      return { bgms };
+    } catch (error) {
+      console.error('BGM 목록 조회 에러:', error);
+      throw new InternalServerErrorException(
+        'BGM 목록을 가져오는데 실패했습니다.',
+      );
+    }
   }
 }

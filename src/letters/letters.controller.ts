@@ -383,4 +383,27 @@ export class LettersController {
   async deleteDraft(@Param('id') id: string, @Request() req: RequestWithUser) {
     return this.lettersService.deleteDraft(+id, req.user.id);
   }
+
+  @ApiOperation({
+    summary: 'BGM 목록 조회 API',
+    description: 'S3에 저장된 BGM 목록을 조회합니다.',
+  })
+  @ApiResponse({
+    status: 200,
+    description: 'BGM 목록 조회 성공',
+    schema: {
+      example: {
+        bgms: [
+          {
+            url: 'https://your-bucket.s3.region.amazonaws.com/bgm/music1.mp3',
+            name: 'music1.mp3',
+          },
+        ],
+      },
+    },
+  })
+  @Get('bgm/list')
+  async getBgmList() {
+    return this.lettersService.getBgmList();
+  }
 }
