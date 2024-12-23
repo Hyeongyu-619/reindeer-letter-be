@@ -2,7 +2,6 @@ import { Injectable, InternalServerErrorException } from '@nestjs/common';
 import { S3Client, PutObjectCommand } from '@aws-sdk/client-s3';
 import { Express } from 'express';
 import * as devConfig from '../../dev.json';
-import sharp from 'sharp';
 
 @Injectable()
 export class S3Service {

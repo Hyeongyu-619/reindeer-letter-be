@@ -3,6 +3,7 @@ service: reindeer-letter-api
 plugins:
   - serverless-plugin-typescript
   - serverless-offline
+  - serverless-plugin-optimize
 
 provider:
   name: aws
@@ -21,16 +22,22 @@ provider:
       - '*/*'
 
 package:
+  individually: false
   patterns:
-    - '!node_modules/.prisma/client/libquery_engine-*'
-    - 'node_modules/.prisma/client/libquery_engine-rhel-*'
-    - '!node_modules/@prisma/engines/**'
-    - '!node_modules/prisma/**'
+    - '!node_modules/**'
     - '!tests/**'
     - '!coverage/**'
     - '!.git/**'
     - '!.vscode/**'
+    - '!src/**/*.spec.ts'
+    - '!src/**/*.test.ts'
     - 'dev.json'
+    - 'dist/**'
+    - '!dist/**/*.map'
+    - 'node_modules/.prisma/client/**'
+    - '!node_modules/.prisma/client/libquery_engine-*'
+    - 'node_modules/.prisma/client/libquery_engine-rhel-*'
+    - '!node_modules/@prisma/engines/**'
 
 custom:
   typescript:
@@ -44,7 +51,7 @@ custom:
 
 functions:
   api:
-    handler: src/lambda.handler
+    handler: dist/lambda.handler
     events:
       - http:
           path: /{proxy+}
