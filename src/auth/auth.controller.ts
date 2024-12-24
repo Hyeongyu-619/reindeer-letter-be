@@ -106,7 +106,6 @@ export class AuthController {
     },
   })
   @ApiBody({ type: LoginDto })
-  @UseGuards(LocalAuthGuard)
   @Throttle({ default: { limit: 3, ttl: 60 } })
   @Post('login')
   async login(

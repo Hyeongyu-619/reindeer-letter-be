@@ -92,7 +92,7 @@ export class LettersController {
   @ApiOperation({
     summary: '내 편지 목록 조회 API',
     description:
-      '자신이 받은 편지 목록을 페이지네이션하여 조회합니다. 카테고리로 필터링도 가능합니다.',
+      '자신이 받은 편지 목록을 페이지네이션하여 조회합니다. 카테고리로 필터��도 가능합니다.',
   })
   @ApiQuery({
     name: 'page',
@@ -274,7 +274,8 @@ export class LettersController {
         file: {
           type: 'string',
           format: 'binary',
-          description: '업로드할 음성 파일 (mp3, wav, m4a만 허용, 최대 10MB)',
+          description:
+            '업로드할 음성 파일 (mp3, wav, m4a, mp4만 허용, 최대 10MB)',
         },
       },
     },
@@ -296,7 +297,7 @@ export class LettersController {
       new ParseFilePipe({
         validators: [
           new MaxFileSizeValidator({ maxSize: 10 * 1024 * 1024 }),
-          new FileTypeValidator({ fileType: /(mp3|wav|m4a)$/ }),
+          new FileTypeValidator({ fileType: /(mp3|wav|m4a|mp4)$/ }),
         ],
       }),
     )
@@ -406,7 +407,7 @@ export class LettersController {
 
   @ApiOperation({
     summary: '임시저장 편지 수정 API',
-    description: '임시저장된 편지�� 수정합니다.',
+    description: '임시저장된 편지 수정합니다.',
   })
   @Put('draft/:id')
   @UseGuards(JwtAuthGuard)
@@ -455,7 +456,7 @@ export class LettersController {
 
   @ApiOperation({
     summary: '임시저장 편지 발송 API',
-    description: '임시저장된 편지를 발송하고 임시저��� 목록에서 제거합니다.',
+    description: '임시저장된 편지를 발송하고 임시저 목록에서 제거합니다.',
   })
   @ApiParam({
     name: 'id',
