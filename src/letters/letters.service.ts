@@ -51,6 +51,7 @@ export class LettersService {
       data: {
         ...letterData,
         imageUrls: imageUrls || [],
+        audioUrl,
         senderNickname: senderNickName,
         scheduledAt: scheduledDate,
         isDelivered,
