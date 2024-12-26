@@ -19,6 +19,7 @@ import {
   ReindeerSkin,
 } from '../constants/reindeer-images';
 import * as devConfig from '../../dev.json';
+import crypto from 'crypto';
 
 interface RequestWithUser extends Request {
   user: {
@@ -65,6 +66,7 @@ export class AuthService {
           password: true,
           nickName: true,
           profileImageUrl: true,
+          publicId: true,
           createdAt: true,
           updatedAt: true,
           refreshToken: true,
@@ -137,6 +139,7 @@ export class AuthService {
           nickName: 'nickName' in user ? user.nickName : undefined,
           profileImageUrl:
             'profileImageUrl' in user ? user.profileImageUrl : undefined,
+          publicId: 'publicId' in user ? user.publicId : undefined,
         },
       };
     } catch (error) {
@@ -157,7 +160,7 @@ export class AuthService {
         throw new UnauthorizedException('유효하지 않은 리프레시 토큰입니다.');
       }
 
-      // 새로운 토큰 발급
+      // 새로운 토큰 ���급
       const newPayload = { sub: user.id, email: user.email };
       const newAccessToken = this.jwtService.sign(newPayload, {
         expiresIn: '1h',
@@ -219,7 +222,7 @@ export class AuthService {
     });
 
     if (!verification || !verification.verified) {
-      throw new BadRequestException('이메일 ��증이 필요합니다.');
+      throw new BadRequestException('이메일 인증이 필요합니다.');
     }
 
     // 이메일 중복 체크
@@ -227,7 +230,7 @@ export class AuthService {
       where: { email },
     });
     if (existingEmail) {
-      throw new ConflictException('이미 사용 중인 이메일입니다.');
+      throw new ConflictException('이미 사용 중인 이메일입니���.');
     }
 
     // 닉네임 중복 체크
@@ -246,12 +249,15 @@ export class AuthService {
       mufflerColor,
     });
 
+    const publicId = crypto.randomBytes(8).toString('base64url');
+
     const user = await this.prisma.user.create({
       data: {
         email,
         password: hashedPassword,
         nickName,
         profileImageUrl,
+        publicId,
         refreshToken: null,
       },
       select: {
@@ -259,6 +265,7 @@ export class AuthService {
         email: true,
         nickName: true,
         profileImageUrl: true,
+        publicId: true,
         createdAt: true,
         updatedAt: true,
         refreshToken: true,
@@ -350,6 +357,7 @@ export class AuthService {
         email: true,
         nickName: true,
         profileImageUrl: true,
+        publicId: true,
       },
     });
 
@@ -427,12 +435,15 @@ export class AuthService {
       mufflerColor: additionalData.mufflerColor,
     });
 
+    const publicId = crypto.randomBytes(8).toString('base64url');
+
     const user = await this.prisma.user.create({
       data: {
         email,
         kakaoId,
         nickName: additionalData.nickname,
         profileImageUrl,
+        publicId,
       },
     });
 
@@ -513,6 +524,8 @@ export class AuthService {
       mufflerColor: additionalData.mufflerColor,
     });
 
+    const publicId = crypto.randomBytes(8).toString('base64url');
+
     const user = await this.prisma.user.create({
       data: {
         email,
@@ -520,12 +533,14 @@ export class AuthService {
         nickName: additionalData.nickname,
         password: '',
         profileImageUrl,
+        publicId,
       },
       select: {
         id: true,
         email: true,
         nickName: true,
         profileImageUrl: true,
+        publicId: true,
         createdAt: true,
         updatedAt: true,
         refreshToken: true,

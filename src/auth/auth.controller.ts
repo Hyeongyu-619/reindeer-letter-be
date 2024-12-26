@@ -69,7 +69,7 @@ export class AuthController {
         email: 'user1@example.com',
         nickname: 'johndoe1',
         profileImageUrl: 'https://example.com/images/profile.jpg',
-        role: 'USER',
+        publicId: 'abc123xyz',
         createdAt: '2024-11-23T07:59:45.179Z',
         updatedAt: '2024-11-23T07:59:45.179Z',
         deletedAt: null,
@@ -102,9 +102,17 @@ export class AuthController {
     schema: {
       example: {
         access_token: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...',
+        user: {
+          id: 1,
+          email: 'user@example.com',
+          nickName: 'johndoe',
+          profileImageUrl: 'https://example.com/images/profile.jpg',
+          publicId: 'abc123xyz',
+        },
       },
     },
   })
+  @UseGuards(LocalAuthGuard)
   @ApiBody({ type: LoginDto })
   @Throttle({ default: { limit: 3, ttl: 60 } })
   @Post('login')
@@ -317,6 +325,7 @@ export class AuthController {
         email: 'user@example.com',
         nickName: 'johndoe',
         profileImageUrl: 'https://example.com/images/profile.jpg',
+        publicId: 'abc123xyz',
       },
     },
   })

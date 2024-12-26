@@ -42,6 +42,7 @@ export class KakaoStrategy extends PassportStrategy(Strategy, 'kakao') {
           email: user.user.email,
           nickName: user.user.nickName,
           profileImageUrl: user.user.profileImageUrl,
+          publicId: user.user.publicId,
         };
       }
 

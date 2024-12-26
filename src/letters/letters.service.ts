@@ -42,7 +42,9 @@ export class LettersService {
 
       const now = new Date();
       now.setHours(0, 0, 0, 0);
-      if (scheduledDate > now) {
+
+      // 예약 날짜가 오늘보다 미래인 경우에만 false로 설정
+      if (scheduledDate.getTime() > now.getTime()) {
         isDelivered = false;
       }
     }
@@ -257,6 +259,7 @@ export class LettersService {
 
   async processScheduledLetters() {
     const now = new Date();
+    now.setHours(0, 0, 0, 0);
 
     const scheduledLetters = await this.prisma.letter.findMany({
       where: {
@@ -280,7 +283,6 @@ export class LettersService {
           },
         });
 
-        // 이메일 발송
         try {
           await this.emailService.sendLetterNotification(
             letter.receiver.email,
