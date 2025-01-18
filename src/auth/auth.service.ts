@@ -160,7 +160,7 @@ export class AuthService {
         throw new UnauthorizedException('유효하지 않은 리프레시 토큰입니다.');
       }
 
-      // 새로운 토큰 ���급
+      // 새로운 토큰 발급
       const newPayload = { sub: user.id, email: user.email };
       const newAccessToken = this.jwtService.sign(newPayload, {
         expiresIn: '1h',
@@ -230,7 +230,7 @@ export class AuthService {
       where: { email },
     });
     if (existingEmail) {
-      throw new ConflictException('이미 사용 중인 이메일입니���.');
+      throw new ConflictException('이미 사용 중인 이메일입니다.');
     }
 
     // 닉네임 중복 체크

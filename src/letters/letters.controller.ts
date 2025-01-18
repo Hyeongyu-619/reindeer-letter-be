@@ -92,7 +92,7 @@ export class LettersController {
   @ApiOperation({
     summary: '내 편지 목록 조회 API',
     description:
-      '자신이 받은 편지 목록을 페이지네이션하여 조회합니다. 카테고리로 필터��도 가능합니다.',
+      '자신이 받은 편지 목록을 페이지네이션하여 조회합니다. 카테고리로 필터도 가능합니다.',
   })
   @ApiQuery({
     name: 'page',
